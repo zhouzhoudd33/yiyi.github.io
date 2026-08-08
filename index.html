@@ -126,23 +126,23 @@
 
 <script>
     // ==========================================================
-    // 一、GitHub 仓库配置（自动读取词库核心）
+    // 一、GitHub 仓库配置
     // ==========================================================
     const REPO_OWNER = "zhouzhoudd33";
     const REPO_NAME = "yiyi.github.io";
     const DATA_DIR = "data";
+    // 备用 GitHub API
     const API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${DATA_DIR}`;
 
-    let currentPhonics = {}; // 当前加载的词库数据
+    let currentPhonics = {}; 
     let currentGradeName = "";
-    let currentWordKeys = []; // 单词列表
+    let currentWordKeys = []; 
     let currentIndex = 0;
 
     // ==========================================================
-    // 二、自然拼读规则核心数据源（不可删除）
+    // 二、自然拼读规则核心数据源
     // ==========================================================
     const phonicsCombosData = [
-        // 4 字母组合
         { type: "4字母", combo: "aigh", ipa: "/eɪ/", rule: "发双元音 /eɪ/，i和gh不发音。", examples: "straight, freight" },
         { type: "4字母", combo: "eigh", ipa: "/eɪ/", rule: "发双元音 /eɪ/，gh不发音。", examples: "eight, weight" },
         { type: "4字母", combo: "augh", ipa: "/ɔː/", rule: "多发长元音 /ɔː/。", examples: "caught, taught" },
@@ -151,8 +151,6 @@
         { type: "4字母", combo: "tion", ipa: "/ʃən/", rule: "词尾名词后缀，发 /ʃən/。", examples: "nation, station" },
         { type: "4字母", combo: "sion", ipa: "/ʃən/ 或 /ʒən/", rule: "常发 /ʃən/，前接元音时发 /ʒən/。", examples: "tension, vision" },
         { type: "4字母", combo: "ture", ipa: "/tʃə/", rule: "词尾后缀，发 /tʃə/。", examples: "nature, picture" },
-        
-        // 3 字母组合
         { type: "3字母", combo: "air", ipa: "/eə/", rule: "发双元音+r音 /eə/。", examples: "air, hair, chair" },
         { type: "3字母", combo: "are", ipa: "/eə/", rule: "词尾发 /eə/，e不发音。", examples: "care, share" },
         { type: "3字母", combo: "ear", ipa: "/ɪə/ 或 /eə/", rule: "常发 /ɪə/，部分发 /eə/。", examples: "hear, bear" },
@@ -166,8 +164,6 @@
         { type: "3字母", combo: "shr", ipa: "/ʃr/", rule: "sh发/ʃ/，r发/r/。", examples: "shrink, shrimp" },
         { type: "3字母", combo: "thr", ipa: "/θr/", rule: "th发/θ/，r发/r/。", examples: "three, throw" },
         { type: "3字母", combo: "squ", ipa: "/skw/", rule: "发 /skw/。", examples: "square, squirrel" },
-
-        // 2 字母组合
         { type: "2字母", combo: "ai", ipa: "/eɪ/", rule: "发双元音 /eɪ/，通常在词中。", examples: "rain, wait" },
         { type: "2字母", combo: "ay", ipa: "/eɪ/", rule: "发双元音 /eɪ/，通常在词尾。", examples: "day, play" },
         { type: "2字母", combo: "ee", ipa: "/iː/", rule: "发长元音 /iː/。", examples: "see, tree" },
@@ -248,39 +244,30 @@
         const w = word.toLowerCase();
         while (i < w.length) {
             let matched = false;
-            // 1. 优先匹配 Magic E (如 a_e)
             if (i + 2 < w.length && w[i+2] === 'e') {
                 const magicKey = w[i] + '_e';
-                if (extendedPhonicsRules[magicKey]) {
-                    chunks.push(w.substring(i, i+3)); i += 3; matched = true; continue;
-                }
+                if (extendedPhonicsRules[magicKey]) { chunks.push(w.substring(i, i+3)); i += 3; matched = true; continue; }
             }
-            // 2. 优先匹配 4 字母组合
             if (i + 4 <= w.length) {
                 const sub4 = w.substring(i, i + 4);
                 if (phonicsCombosData.find(c => c.combo === sub4)) { chunks.push(sub4); i += 4; matched = true; continue; }
             }
-            // 3. 优先匹配 3 字母组合
             if (i + 3 <= w.length) {
                 const sub3 = w.substring(i, i + 3);
                 if (phonicsCombosData.find(c => c.combo === sub3)) { chunks.push(sub3); i += 3; matched = true; continue; }
             }
-            // 4. 优先匹配 2 字母组合
             if (i + 2 <= w.length) {
                 const sub2 = w.substring(i, i + 2);
                 if (phonicsCombosData.find(c => c.combo === sub2) || extendedPhonicsRules[sub2]) { chunks.push(sub2); i += 2; matched = true; continue; }
             }
-            // 5. 单字母处理
             if (!matched) { chunks.push(w[i]); i++; }
         }
         return chunks;
     }
 
-    // 生成解析步骤的 HTML
     function generateAnalysisSteps(word, predefinedSplit = null) {
         const chunks = predefinedSplit && predefinedSplit.length > 0 ? predefinedSplit : splitWordToChunks(word);
         const letters = word.split('').join(' - ');
-        
         let html = `
             <div class="step-card whole">
                 <div class="step-title">第一步：找元音，划音节 & 第二步：找辅音定组合</div>
@@ -299,25 +286,18 @@
             <div style="margin-top: 15px;">
                 <div class="step-title" style="margin-bottom: 10px; font-size: 16px; color: #558b2f;">【划词块发音规则解析】：</div>
         `;
-        
         let comboReasonsHTML = '';
-        
         for (const chunk of chunks) {
             let ruleData = phonicsCombosData.find(c => c.combo === chunk) || extendedPhonicsRules[chunk];
             if (ruleData) {
-                const ipaStr = ruleData.ipa || '';
-                const ruleStr = ruleData.rule || '';
-                const examplesStr = ruleData.examples || '';
                 html += `
                     <div class="step-card combo" style="margin-bottom: 8px;">
                         <div class="step-title">▶ 块【${chunk}】拆解与发音规则：</div>
-                        <div class="step-content">
-                            - [${chunk}]：发 ${ipaStr}。 规则:${ruleStr} 例:${examplesStr}。
-                        </div>
+                        <div class="step-content">- [${chunk}]：发 ${ruleData.ipa || ''}。 规则:${ruleData.rule || ''} 例:${ruleData.examples || ''}。</div>
                     </div>
                 `;
                 if (phonicsCombosData.find(c => c.combo === chunk)) {
-                    comboReasonsHTML += `<div style="margin-bottom: 5px;">【${chunk}组合】${ruleStr} 例:${examplesStr}。</div>`;
+                    comboReasonsHTML += `<div style="margin-bottom: 5px;">【${chunk}组合】${ruleData.rule || ''} 例:${ruleData.examples || ''}。</div>`;
                 }
             } else {
                 html += `
@@ -328,7 +308,6 @@
                 `;
             }
         }
-        
         html += `
             </div>
             <div class="step-card combo" style="margin-top: 15px;">
@@ -340,36 +319,56 @@
                 <div class="step-content">(名词/形容词常在第1音节，动词常在第2音节，参考音标 ' 符号)</div>
             </div>
         `;
-        
         return html;
     }
 
     // ==========================================================
-    // 四、GitHub 词库自动加载与切换
+    // 四、GitHub 词库自动加载与切换 (已优化稳定性)
     // ==========================================================
     async function loadGradeList() {
+        let files = [];
         try {
-            const res = await fetch(API_URL);
-            if (!res.ok) throw new Error("网络错误");
-            const data = await res.json();
-            const files = data.filter(f => f.name.endsWith('.json')).sort((a, b) => a.name.localeCompare(b.name));
-            
-            const box = document.getElementById("gradeButtons");
-            box.innerHTML = "";
-            if (files.length === 0) {
-                box.innerHTML = '<div style="color:red; font-size:14px;">未在 data 文件夹找到词库文件</div>';
+            // 优先使用 jsdelivr API (国内访问快，无限流)
+            const res = await fetch(`https://data.jsdelivr.com/v1/packages/gh/${REPO_OWNER}/${REPO_NAME}@main/${DATA_DIR}`);
+            if (res.ok) {
+                const data = await res.json();
+                files = (data.files || []).filter(f => f.name.endsWith('.json'));
+            } else {
+                throw new Error("jsdelivr failed");
+            }
+        } catch (e) {
+            // 备用 GitHub API (可能有限流)
+            try {
+                const res = await fetch(API_URL);
+                if (res.ok) {
+                    const data = await res.json();
+                    files = data.filter(f => f.name.endsWith('.json')).map(f => ({ name: f.name }));
+                } else {
+                    throw new Error("github api failed");
+                }
+            } catch (err) {
+                document.getElementById("gradeButtons").innerHTML = '<div style="color:red; font-size:14px;">词库列表加载失败，请检查网络</div>';
                 return;
             }
-            files.forEach(file => {
-                const btn = document.createElement("button");
-                btn.className = "grade-btn";
-                btn.textContent = file.name.replace('.json', '');
-                btn.onclick = () => loadGrade(file.download_url, file.name.replace('.json', ''), btn);
-                box.appendChild(btn);
-            });
-        } catch (err) {
-            document.getElementById("gradeButtons").innerHTML = '<div style="color:red; font-size:14px;">词库列表加载失败</div>';
         }
+        
+        files.sort((a, b) => a.name.localeCompare(b.name));
+        const box = document.getElementById("gradeButtons");
+        box.innerHTML = "";
+        if (files.length === 0) {
+            box.innerHTML = '<div style="color:red; font-size:14px;">未在 data 文件夹找到词库文件</div>';
+            return;
+        }
+        files.forEach(file => {
+            const btn = document.createElement("button");
+            btn.className = "grade-btn";
+            const displayName = file.name.replace('.json', '');
+            btn.textContent = displayName;
+            // 构建下载链接，对中文文件名进行编码
+            const fileUrl = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/${DATA_DIR}/${encodeURIComponent(file.name)}`;
+            btn.onclick = () => loadGrade(fileUrl, displayName, btn);
+            box.appendChild(btn);
+        });
     }
 
     async function loadGrade(url, name, btn) {
@@ -386,7 +385,7 @@
             currentIndex = 0;
             displayCurrentWord();
         } catch (err) {
-            alert("加载词库失败");
+            alert("加载词库内容失败");
         }
     }
 
@@ -460,7 +459,6 @@
         } catch (e) {}
         
         const analysisHTML = generateAnalysisSteps(word);
-        
         resultDiv.innerHTML = `
             <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #e0f7fa; padding-bottom: 15px;">
                 <h2 style="font-size: 32px; color: #00796b; margin: 0 0 5px 0;">${word}</h2>
@@ -489,7 +487,7 @@
     // 七、初始化
     // ==========================================================
     window.addEventListener('load', function() {
-        loadGradeList(); // 页面加载自动获取词库列表
+        loadGradeList();
         document.getElementById('manualInput').addEventListener('keydown', function(e) {
             if (e.key === 'Enter') analyzeManualWord();
         });
