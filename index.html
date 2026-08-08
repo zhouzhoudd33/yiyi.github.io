@@ -16,27 +16,18 @@
         header { text-align: center; margin-bottom: 20px; }
         h1 { color: #00897b; margin: 10px 0 15px; font-size: 24px; }
         
-        /* 词库选择区 */
         .grade-section { background: #fff; padding: 16px; border-radius: 16px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .grade-title { font-size: 14px; color: #666; margin-bottom: 12px; text-align: center; }
         .grade-buttons { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-        .grade-btn {
-            padding: 8px 16px; font-size: 14px; border: 2px solid #4a90d9; background: #fff;
-            color: #4a90d9; border-radius: 20px; cursor: pointer; transition: all 0.2s;
-        }
+        .grade-btn { padding: 8px 16px; font-size: 14px; border: 2px solid #4a90d9; background: #fff; color: #4a90d9; border-radius: 20px; cursor: pointer; transition: all 0.2s; }
         .grade-btn.active { background: #4a90d9; color: #fff; }
         .grade-btn:active { transform: scale(0.95); }
 
-        /* 卡片通用样式 */
-        .card {
-            background: white; border-radius: 24px; padding: 30px 20px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.08); text-align: center; margin-bottom: 20px;
-        }
+        .card { background: white; border-radius: 24px; padding: 30px 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); text-align: center; margin-bottom: 20px; }
         .index-badge { font-size: 14px; color: #888; margin-bottom: 10px; background: #f5f5f5; display: inline-block; padding: 4px 12px; border-radius: 10px; }
         .word-display h2 { font-size: 42px; color: #00796b; margin: 10px 0; font-weight: 800; letter-spacing: 1px; word-break: break-word; cursor: pointer; }
         .word-display p { font-size: 18px; color: #666; margin: 5px 0; }
         
-        /* 按钮控制区 */
         .audio-controls { display: flex; justify-content: space-between; margin: 20px 0 15px; gap: 8px; }
         .audio-btn { flex: 1; padding: 12px 5px; border: none; border-radius: 12px; background: #80cbc4; color: white; font-size: 14px; font-weight: bold; cursor: pointer; transition: transform 0.1s; }
         .audio-btn:active { transform: scale(0.95); background: #4db6ac; }
@@ -45,7 +36,6 @@
         .btn-primary { background: #ff7043; flex: 2; }
         .btn-secondary { background: #ffb74d; }
 
-        /* 解析结果区 */
         .analysis-panel { background: white; border-radius: 24px; padding: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); display: none; animation: slideDown 0.4s ease; margin-bottom: 20px; }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         .analysis-panel h3 { color: #00897b; border-bottom: 2px solid #e0f7fa; padding-bottom: 10px; margin-top: 0; }
@@ -58,7 +48,6 @@
         .step-content { font-size: 15px; line-height: 1.6; color: #444; white-space: pre-wrap; }
         .ipa-badge { display: inline-block; background: #00796b; color: white; padding: 4px 12px; border-radius: 20px; font-size: 20px; font-weight: bold; margin-bottom: 10px; }
         
-        /* 任意单词解析区 */
         .manual-input-row { display: flex; gap: 10px; margin-bottom: 15px; }
         .manual-input-row input { flex: 1; padding: 12px; border-radius: 10px; border: 2px solid #b2dfdb; font-size: 16px; outline: none; }
         .manual-input-row input:focus { border-color: #4db6ac; }
@@ -71,7 +60,6 @@
         <h1>自然拼读法分级解析系统</h1>
     </header>
 
-    <!-- 动态词库选择区 -->
     <div class="grade-section">
         <div class="grade-title">请选择学习词库：</div>
         <div class="grade-buttons" id="gradeButtons">
@@ -79,13 +67,11 @@
         </div>
     </div>
 
-    <!-- 单词卡片展示区 -->
     <main class="card" id="wordCard">
         <div style="text-align: center; padding: 40px 20px; color: #999;">
             <h3 style="color: #00897b; margin-bottom: 15px;">📖 请选择上方词库开始学习</h3>
             <p>选择词库后，系统将自动按自然拼读规则解析单词</p>
         </div>
-        
         <div id="wordContent" style="display: none;">
             <div class="word-display">
                 <span id="wordIndex" class="index-badge">第 1 / 1 个</span>
@@ -104,16 +90,12 @@
         </div>
     </main>
 
-    <!-- 解析结果展示区 -->
     <section class="analysis-panel" id="analysisPanel">
         <h3>自然拼读深度解析</h3>
-        <div style="text-align:center;">
-            国际音标：<span id="ipaText" class="ipa-badge">/ˈsaɪəns/</span>
-        </div>
+        <div style="text-align:center;">国际音标：<span id="ipaText" class="ipa-badge">/ˈsaɪəns/</span></div>
         <div id="stepsContainer"></div>
     </section>
 
-    <!-- 任意单词手动解析区 -->
     <section class="card" style="margin-top: 20px;">
         <h3 style="color: #00897b; margin-bottom: 15px;">🔍 任意单词深度解析</h3>
         <div class="manual-input-row">
@@ -125,23 +107,64 @@
 </div>
 
 <script>
-    // ==========================================================
-    // 一、GitHub 仓库配置
-    // ==========================================================
     const REPO_OWNER = "zhouzhoudd33";
     const REPO_NAME = "yiyi.github.io";
-    const DATA_DIR = "data";
-    // 备用 GitHub API
-    const API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${DATA_DIR}`;
+    let currentPhonics = {}; let currentGradeName = ""; let currentWordKeys = []; let currentIndex = 0;
 
-    let currentPhonics = {}; 
-    let currentGradeName = "";
-    let currentWordKeys = []; 
-    let currentIndex = 0;
+    async function loadGradeList() {
+        try {
+            // 通过 jsdelivr CDN 读取自动生成的清单文件，极速且稳定
+            const res = await fetch(`https://cdn.jsdelivr.net/gh/${REPO_OWNER}/${REPO_NAME}@main/data/manifest.json`);
+            if (!res.ok) throw new Error("清单加载失败");
+            const files = await res.json();
+            
+            const box = document.getElementById("gradeButtons");
+            box.innerHTML = "";
+            if (!files || files.length === 0) {
+                box.innerHTML = '<div style="color:red; font-size:14px;">未在 data 文件夹找到词库</div>';
+                return;
+            }
+            files.forEach(file => {
+                const btn = document.createElement("button");
+                btn.className = "grade-btn";
+                btn.textContent = file.name;
+                const fileUrl = `https://cdn.jsdelivr.net/gh/${REPO_OWNER}/${REPO_NAME}@main/data/${encodeURIComponent(file.file)}`;
+                btn.onclick = () => loadGrade(fileUrl, file.name, btn);
+                box.appendChild(btn);
+            });
+        } catch (err) {
+            document.getElementById("gradeButtons").innerHTML = '<div style="color:red; font-size:14px;">词库列表加载失败，请稍后刷新</div>';
+        }
+    }
 
-    // ==========================================================
-    // 二、自然拼读规则核心数据源
-    // ==========================================================
+    async function loadGrade(url, name, btn) {
+        document.querySelectorAll(".grade-btn").forEach(b => b.classList.remove("active"));
+        if(btn) btn.classList.add("active");
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error("网络错误");
+            currentPhonics = await res.json();
+            currentGradeName = name;
+            currentWordKeys = Object.keys(currentPhonics);
+            document.getElementById('wordContent').style.display = 'block';
+            document.getElementById('analysisPanel').style.display = 'none';
+            currentIndex = 0;
+            displayCurrentWord();
+        } catch (err) {
+            alert("加载词库内容失败，请检查网络");
+        }
+    }
+
+    function displayCurrentWord() {
+        if (currentWordKeys.length === 0) return;
+        const word = currentWordKeys[currentIndex];
+        const data = currentPhonics[word];
+        document.getElementById('wordIndex').textContent = `第 ${currentIndex + 1} / ${currentWordKeys.length} 个`;
+        document.getElementById('wordText').textContent = word;
+        document.getElementById('wordMeaning').textContent = Array.isArray(data) ? `拆分: ${data.join('-')}` : '';
+        document.getElementById('analysisPanel').style.display = 'none';
+    }
+
     const phonicsCombosData = [
         { type: "4字母", combo: "aigh", ipa: "/eɪ/", rule: "发双元音 /eɪ/，i和gh不发音。", examples: "straight, freight" },
         { type: "4字母", combo: "eigh", ipa: "/eɪ/", rule: "发双元音 /eɪ/，gh不发音。", examples: "eight, weight" },
@@ -235,31 +258,14 @@
         "y": { ipa: "/j/ 或 /aɪ/", rule: "词首发/j/，词尾发/aɪ/。", examples: "yes, my" }
     };
 
-    // ==========================================================
-    // 三、动态拆词与规则解析引擎
-    // ==========================================================
     function splitWordToChunks(word) {
-        const chunks = [];
-        let i = 0;
-        const w = word.toLowerCase();
+        const chunks = []; let i = 0; const w = word.toLowerCase();
         while (i < w.length) {
             let matched = false;
-            if (i + 2 < w.length && w[i+2] === 'e') {
-                const magicKey = w[i] + '_e';
-                if (extendedPhonicsRules[magicKey]) { chunks.push(w.substring(i, i+3)); i += 3; matched = true; continue; }
-            }
-            if (i + 4 <= w.length) {
-                const sub4 = w.substring(i, i + 4);
-                if (phonicsCombosData.find(c => c.combo === sub4)) { chunks.push(sub4); i += 4; matched = true; continue; }
-            }
-            if (i + 3 <= w.length) {
-                const sub3 = w.substring(i, i + 3);
-                if (phonicsCombosData.find(c => c.combo === sub3)) { chunks.push(sub3); i += 3; matched = true; continue; }
-            }
-            if (i + 2 <= w.length) {
-                const sub2 = w.substring(i, i + 2);
-                if (phonicsCombosData.find(c => c.combo === sub2) || extendedPhonicsRules[sub2]) { chunks.push(sub2); i += 2; matched = true; continue; }
-            }
+            if (i + 2 < w.length && w[i+2] === 'e') { const magicKey = w[i] + '_e'; if (extendedPhonicsRules[magicKey]) { chunks.push(w.substring(i, i+3)); i += 3; matched = true; continue; } }
+            if (i + 4 <= w.length) { const sub4 = w.substring(i, i + 4); if (phonicsCombosData.find(c => c.combo === sub4)) { chunks.push(sub4); i += 4; matched = true; continue; } }
+            if (i + 3 <= w.length) { const sub3 = w.substring(i, i + 3); if (phonicsCombosData.find(c => c.combo === sub3)) { chunks.push(sub3); i += 3; matched = true; continue; } }
+            if (i + 2 <= w.length) { const sub2 = w.substring(i, i + 2); if (phonicsCombosData.find(c => c.combo === sub2) || extendedPhonicsRules[sub2]) { chunks.push(sub2); i += 2; matched = true; continue; } }
             if (!matched) { chunks.push(w[i]); i++; }
         }
         return chunks;
@@ -269,162 +275,36 @@
         const chunks = predefinedSplit && predefinedSplit.length > 0 ? predefinedSplit : splitWordToChunks(word);
         const letters = word.split('').join(' - ');
         let html = `
-            <div class="step-card whole">
-                <div class="step-title">第一步：找元音，划音节 & 第二步：找辅音定组合</div>
-                <div class="step-content">
-                    ${chunks.join('·')}（约${chunks.filter(c => /[aeiouy]/i.test(c)).length}音节）<br>
-                    【动态强制划词(降序法则)】：${chunks.join(' - ')}
-                </div>
-            </div>
-            <div class="step-card whole">
-                <div class="step-title">第三步：组拼读块 & 第四步：套规则发音</div>
-                <div class="step-content">
-                    全词字母拆解：${letters}<br>
-                    组拼读块划分：${chunks.join(' - ')}
-                </div>
-            </div>
-            <div style="margin-top: 15px;">
-                <div class="step-title" style="margin-bottom: 10px; font-size: 16px; color: #558b2f;">【划词块发音规则解析】：</div>
-        `;
+            <div class="step-card whole"><div class="step-title">第一步：找元音，划音节 & 第二步：找辅音定组合</div><div class="step-content">${chunks.join('·')}（约${chunks.filter(c => /[aeiouy]/i.test(c)).length}音节）<br>【动态强制划词(降序法则)】：${chunks.join(' - ')}</div></div>
+            <div class="step-card whole"><div class="step-title">第三步：组拼读块 & 第四步：套规则发音</div><div class="step-content">全词字母拆解：${letters}<br>组拼读块划分：${chunks.join(' - ')}</div></div>
+            <div style="margin-top: 15px;"><div class="step-title" style="margin-bottom: 10px; font-size: 16px; color: #558b2f;">【划词块发音规则解析】：</div>`;
         let comboReasonsHTML = '';
         for (const chunk of chunks) {
             let ruleData = phonicsCombosData.find(c => c.combo === chunk) || extendedPhonicsRules[chunk];
             if (ruleData) {
-                html += `
-                    <div class="step-card combo" style="margin-bottom: 8px;">
-                        <div class="step-title">▶ 块【${chunk}】拆解与发音规则：</div>
-                        <div class="step-content">- [${chunk}]：发 ${ruleData.ipa || ''}。 规则:${ruleData.rule || ''} 例:${ruleData.examples || ''}。</div>
-                    </div>
-                `;
-                if (phonicsCombosData.find(c => c.combo === chunk)) {
-                    comboReasonsHTML += `<div style="margin-bottom: 5px;">【${chunk}组合】${ruleData.rule || ''} 例:${ruleData.examples || ''}。</div>`;
-                }
-            } else {
-                html += `
-                    <div class="step-card" style="margin-bottom: 8px;">
-                        <div class="step-title">▶ 块【${chunk}】拆解与发音规则：</div>
-                        <div class="step-content">- [${chunk}]：常见单字母发音规则。</div>
-                    </div>
-                `;
-            }
+                html += `<div class="step-card combo" style="margin-bottom: 8px;"><div class="step-title">▶ 块【${chunk}】拆解与发音规则：</div><div class="step-content">- [${chunk}]：发 ${ruleData.ipa || ''}。 规则:${ruleData.rule || ''} 例:${ruleData.examples || ''}。</div></div>`;
+                if (phonicsCombosData.find(c => c.combo === chunk)) { comboReasonsHTML += `<div style="margin-bottom: 5px;">【${chunk}组合】${ruleData.rule || ''} 例:${ruleData.examples || ''}。</div>`; }
+            } else { html += `<div class="step-card" style="margin-bottom: 8px;"><div class="step-title">▶ 块【${chunk}】拆解与发音规则：</div><div class="step-content">- [${chunk}]：常见单字母发音规则。</div></div>`; }
         }
-        html += `
-            </div>
-            <div class="step-card combo" style="margin-top: 15px;">
-                <div class="step-title">组合发音解析与口诀</div>
-                <div class="step-content">${comboReasonsHTML || '<div>无特殊组合口诀。</div>'}</div>
-            </div>
-            <div class="step-card" style="margin-top: 15px;">
-                <div class="step-title">第五步：定重音</div>
-                <div class="step-content">(名词/形容词常在第1音节，动词常在第2音节，参考音标 ' 符号)</div>
-            </div>
-        `;
+        html += `</div><div class="step-card combo" style="margin-top: 15px;"><div class="step-title">组合发音解析与口诀</div><div class="step-content">${comboReasonsHTML || '<div>无特殊组合口诀。</div>'}</div></div><div class="step-card" style="margin-top: 15px;"><div class="step-title">第五步：定重音</div><div class="step-content">(名词/形容词常在第1音节，动词常在第2音节，参考音标 ' 符号)</div></div>`;
         return html;
     }
 
-    // ==========================================================
-    // 四、GitHub 词库自动加载与切换 (已优化稳定性)
-    // ==========================================================
-    async function loadGradeList() {
-        let files = [];
-        try {
-            // 优先使用 jsdelivr API (国内访问快，无限流)
-            const res = await fetch(`https://data.jsdelivr.com/v1/packages/gh/${REPO_OWNER}/${REPO_NAME}@main/${DATA_DIR}`);
-            if (res.ok) {
-                const data = await res.json();
-                files = (data.files || []).filter(f => f.name.endsWith('.json'));
-            } else {
-                throw new Error("jsdelivr failed");
-            }
-        } catch (e) {
-            // 备用 GitHub API (可能有限流)
-            try {
-                const res = await fetch(API_URL);
-                if (res.ok) {
-                    const data = await res.json();
-                    files = data.filter(f => f.name.endsWith('.json')).map(f => ({ name: f.name }));
-                } else {
-                    throw new Error("github api failed");
-                }
-            } catch (err) {
-                document.getElementById("gradeButtons").innerHTML = '<div style="color:red; font-size:14px;">词库列表加载失败，请检查网络</div>';
-                return;
-            }
-        }
-        
-        files.sort((a, b) => a.name.localeCompare(b.name));
-        const box = document.getElementById("gradeButtons");
-        box.innerHTML = "";
-        if (files.length === 0) {
-            box.innerHTML = '<div style="color:red; font-size:14px;">未在 data 文件夹找到词库文件</div>';
-            return;
-        }
-        files.forEach(file => {
-            const btn = document.createElement("button");
-            btn.className = "grade-btn";
-            const displayName = file.name.replace('.json', '');
-            btn.textContent = displayName;
-            // 构建下载链接，对中文文件名进行编码
-            const fileUrl = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/${DATA_DIR}/${encodeURIComponent(file.name)}`;
-            btn.onclick = () => loadGrade(fileUrl, displayName, btn);
-            box.appendChild(btn);
-        });
-    }
-
-    async function loadGrade(url, name, btn) {
-        document.querySelectorAll(".grade-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        try {
-            const res = await fetch(url);
-            currentPhonics = await res.json();
-            currentGradeName = name;
-            currentWordKeys = Object.keys(currentPhonics);
-            
-            document.getElementById('wordContent').style.display = 'block';
-            document.getElementById('analysisPanel').style.display = 'none';
-            currentIndex = 0;
-            displayCurrentWord();
-        } catch (err) {
-            alert("加载词库内容失败");
-        }
-    }
-
-    function displayCurrentWord() {
-        if (currentWordKeys.length === 0) return;
-        const word = currentWordKeys[currentIndex];
-        const data = currentPhonics[word];
-        document.getElementById('wordIndex').textContent = `第 ${currentIndex + 1} / ${currentWordKeys.length} 个`;
-        document.getElementById('wordText').textContent = word;
-        document.getElementById('wordMeaning').textContent = Array.isArray(data) ? `拆分: ${data.join('-')}` : '';
-        document.getElementById('analysisPanel').style.display = 'none';
-    }
-
-    // ==========================================================
-    // 五、单词解析与发音控制
-    // ==========================================================
     function analyzeCurrentWord() {
         if (currentWordKeys.length === 0) return;
         const word = currentWordKeys[currentIndex];
         const predefinedSplit = Array.isArray(currentPhonics[word]) ? currentPhonics[word] : null;
-        
         const panel = document.getElementById('analysisPanel');
-        const stepsContainer = document.getElementById('stepsContainer');
         panel.style.display = 'block';
         document.getElementById('ipaText').textContent = '需联网查询单词原音标';
-        
-        stepsContainer.innerHTML = generateAnalysisSteps(word, predefinedSplit);
+        document.getElementById('stepsContainer').innerHTML = generateAnalysisSteps(word, predefinedSplit);
         panel.scrollIntoView({ behavior: 'smooth' });
     }
 
     function playAudio(rate) {
         if (currentWordKeys.length === 0) return;
         const word = currentWordKeys[currentIndex];
-        if ('speechSynthesis' in window) {
-            speechSynthesis.cancel();
-            const u = new SpeechSynthesisUtterance(word);
-            u.lang = 'en-US'; u.rate = rate;
-            speechSynthesis.speak(u);
-        }
+        if ('speechSynthesis' in window) { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(word); u.lang = 'en-US'; u.rate = rate; speechSynthesis.speak(u); }
     }
 
     function nextWord() {
@@ -433,32 +313,23 @@
         displayCurrentWord();
     }
 
-    // ==========================================================
-    // 六、任意单词手动解析
-    // ==========================================================
     async function analyzeManualWord() {
         const word = document.getElementById('manualInput').value.trim().toLowerCase();
         if (!word) return;
         const resultDiv = document.getElementById('manualResult');
         resultDiv.style.display = 'block';
         resultDiv.innerHTML = '<p style="text-align:center; color:#888;">正在查询并解析...</p>';
-        
-        let ipa = '未找到';
-        let meaning = '未找到';
+        let ipa = '未找到'; let meaning = '未找到';
         try {
             const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
             if (response.ok) {
                 const data = await response.json();
                 if (data && data.length > 0) {
-                    const ph = data[0].phonetics?.find(p => p.text);
-                    if (ph) ipa = ph.text;
-                    const m = data[0].meanings?.[0];
-                    if (m) meaning = `${m.partOfSpeech}. ${m.definitions[0].definition}`;
+                    const ph = data[0].phonetics?.find(p => p.text); if (ph) ipa = ph.text;
+                    const m = data[0].meanings?.[0]; if (m) meaning = `${m.partOfSpeech}. ${m.definitions[0].definition}`;
                 }
             }
         } catch (e) {}
-        
-        const analysisHTML = generateAnalysisSteps(word);
         resultDiv.innerHTML = `
             <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #e0f7fa; padding-bottom: 15px;">
                 <h2 style="font-size: 32px; color: #00796b; margin: 0 0 5px 0;">${word}</h2>
@@ -469,28 +340,16 @@
                     <button class="audio-btn" onclick="playManualAudio('${word}', 0.75)">🐢 0.75x</button>
                     <button class="audio-btn" onclick="playManualAudio('${word}', 0.5)">🐌 0.5x</button>
                 </div>
-            </div>
-            ${analysisHTML}
-        `;
+            </div>${generateAnalysisSteps(word)}`;
     }
 
     function playManualAudio(word, rate) {
-        if ('speechSynthesis' in window) {
-            speechSynthesis.cancel();
-            const u = new SpeechSynthesisUtterance(word);
-            u.lang = 'en-US'; u.rate = rate;
-            speechSynthesis.speak(u);
-        }
+        if ('speechSynthesis' in window) { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(word); u.lang = 'en-US'; u.rate = rate; speechSynthesis.speak(u); }
     }
 
-    // ==========================================================
-    // 七、初始化
-    // ==========================================================
     window.addEventListener('load', function() {
         loadGradeList();
-        document.getElementById('manualInput').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') analyzeManualWord();
-        });
+        document.getElementById('manualInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') analyzeManualWord(); });
     });
 </script>
 </body>
