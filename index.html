@@ -532,6 +532,22 @@
     // ==========================================================
     // 全量组合音节数据源（结合文档提取，已去重）
     // ==========================================================
+    // 启动 Web Worker 异步加载外部词库
+const worker = new Worker('js/data-loader.worker.js');
+worker.postMessage({ url: 'data/phonics-flat.json' });
+worker.onmessage = (e) => {
+  if (e.data.type === 'ready') {
+    Object.assign(PHONICS, e.data.data);
+    console.log('词库加载完成，共' + Object.keys(PHONICS).length + '词');
+  } else if (e.data.type === 'error') {
+    console.warn('词库加载失败：' + e.data.msg);
+  }
+};
+
+// 注册 Service Worker（离线缓存）
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW注册失败：', err));
+}
     const phonicsCombosData = [
         // 一、4 字母组合
         { type: "4字母组合", category: "元音类", combo: "aigh", ipa: "/eɪ/", rule: "发双元音 /eɪ/，i和gh不发音，极为固定。", examples: "straight（直的）、freight（货物）" },
