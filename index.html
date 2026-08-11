@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>自然拼读小课堂</title>
-    <!-- 引入 mammoth.js 用于前端解析 docx 文档 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
     <style>
         /* ========== 移动端适配与全局样式 ========== */
         * {
@@ -24,7 +22,7 @@
         }
         .container {
             width: 100%;
-            max-width: 100vw; /* 严格限制最大宽度，禁止横向滚动 */
+            max-width: 100vw;
         }
 
         /* ========== 顶部区域 ========== */
@@ -60,16 +58,7 @@
         .btn-upload:active {
             background: #00897b;
         }
-        select {
-            width: 100%;
-            padding: 12px;
-            border-radius: 10px;
-            border: 1px solid #b2dfdb;
-            font-size: 16px;
-            background: white;
-            color: #555;
-        }
-
+        
         /* ========== 单词卡片区域 ========== */
         .card {
             background: white;
@@ -211,16 +200,42 @@
             font-weight: bold;
             margin-bottom: 10px;
         }
-        .alert-box {
-            background: #fffde7;
-            color: #fbc02d;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 14px;
-            margin-bottom: 10px;
-            border: 1px solid #fff9c4;
+        
+        /* === 拆解列表样式 === */
+        .breakdown-list {
+            margin-top: 10px;
         }
-        /* === 新增：例词点击样式 === */
+        .breakdown-item {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+        }
+        .breakdown-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+            flex-wrap: wrap;
+        }
+        .breakdown-block {
+            background: #00796b;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .breakdown-ipa {
+            color: #d81b60;
+            font-weight: bold;
+        }
+        .breakdown-rule {
+            font-size: 14px;
+            color: #555;
+        }
+        
+        /* === 例词点击样式 === */
         .example-word {
             color: #00796b;
             cursor: pointer;
@@ -238,47 +253,38 @@
 <body>
 
 <div class="container">
-    <!-- 顶部控制区 -->
     <header>
         <h1>自然拼读小课堂</h1>
         <div class="controls-top">
             <label class="btn-upload">
-                📁 上传词库/规则文档
-                <input type="file" id="fileInput" accept=".docx,.txt" style="display:none;">
+                📁 手动上传词库
+                <input type="file" id="fileInput" accept=".json" style="display:none;">
             </label>
-            <select id="bankSwitcher">
-                <option value="uploaded">我上传的词库</option>
-            </select>
         </div>
     </header>
 
-    <!-- 单词卡片展示区 -->
     <main class="card">
         <div class="word-display">
             <span id="wordIndex" class="index-badge">第 0 / 0 个</span>
-            <h2 id="wordText">暂无单词</h2>
-            <p id="wordPos" class="pos">请上传词库文档</p>
+            <h2 id="wordText">正在加载词库...</h2>
+            <p id="wordPos" class="pos"></p>
             <p id="wordMeaning"></p>
         </div>
         
-        <!-- 发音控制区 -->
         <div class="audio-controls">
             <button class="audio-btn" onclick="playAudio(1.0)">🔊 正常发音</button>
             <button class="audio-btn" onclick="playAudio(0.7)">🐢 0.7倍速</button>
             <button class="audio-btn" onclick="playAudio(0.5)">🐌 0.5倍速</button>
         </div>
 
-        <!-- 操作按钮区 -->
         <div class="action-controls">
             <button class="btn-primary" onclick="analyzeWord()">📖 六步深度解析</button>
             <button class="btn-secondary" onclick="nextWord()">下一个 ➡️</button>
         </div>
     </main>
 
-    <!-- 解析结果展示区 -->
     <section class="analysis-panel" id="analysisPanel">
         <h3>自然拼读深度解析</h3>
-        <div id="alertMsg" class="alert-box" style="display:none;"></div>
         <div style="text-align:center;">
             国际音标：<span id="ipaText" class="ipa-badge">/暂无/</span>
         </div>
@@ -288,188 +294,34 @@
 
 <script>
     // ==========================================================
-    // 一、内置数据源（已清空，等待重新上传）
+    // 全局状态管理
     // ==========================================================
-    const defaultWordBank6shang = [];
-    const defaultWordBank6xia = [];
-
-    // ==========================================================
-    // 全量组合音节数据源（结合文档提取，已去重）
-    // ==========================================================
-    const phonicsCombosData = [
-        // 一、4 字母组合
-        { type: "4字母组合", category: "元音类", combo: "aigh", ipa: "/eɪ/", rule: "发双元音 /eɪ/，i和gh不发音，极为固定。", examples: "straight（直的）、freight（货物）" },
-        { type: "4字母组合", category: "元音类", combo: "eigh", ipa: "/eɪ/", rule: "发双元音 /eɪ/，gh不发音，通常在重读音节。", examples: "eight（八）、weight（重量）、sleigh（雪橇）" },
-        { type: "4字母组合", category: "元音类", combo: "augh", ipa: "/ɔˇ/ 或 /ɑˇ/", rule: "多发长元音 /ɔˇ/，少数发 /ɑˇ/（如laugh）。", examples: "caught（抓住）、taught（教）、laugh（笑）" },
-        { type: "4字母组合", category: "元音类", combo: "ough", ipa: "/ɔˇ/ /ʌf/ /uˇ/ 等", rule: "英语中最复杂的组合，常见发 /ɔˇ/、/ʌf/、/uˇ/。", examples: "bought（买）、enough（足够的）、through（穿过）" },
-        { type: "4字母组合", category: "元音类", combo: "ight", ipa: "/aɪt/", rule: "元音i发双元音 /aɪ/，gh不发音，t发/t/。", examples: "light（光）、night（夜晚）、fight（战斗）" },
-        { type: "4字母组合", category: "辅音类", combo: "tion", ipa: "/ʃən/", rule: "词尾常见名词后缀，发 /ʃən/。", examples: "nation（国家）、action（行动）、station（车站）" },
-        { type: "4字母组合", category: "辅音类", combo: "sion", ipa: "/ʃən/ 或 /ʒən/", rule: "词尾后缀，常发 /ʃən/，前接元音时发 /ʒən/。", examples: "tension（紧张）、vision（视力）、television（电视）" },
-        { type: "4字母组合", category: "辅音类", combo: "ture", ipa: "/tʃə/", rule: "词尾后缀，发 /tʃə/。", examples: "nature（自然）、picture（图片）、culture（文化）" },
-        { type: "4字母组合", category: "辅音类", combo: "sure", ipa: "/ʒə/", rule: "词尾后缀，发 /ʒə/。", examples: "measure（测量）、treasure（宝藏）、pleasure（快乐）" },
-        { type: "4字母组合", category: "辅音类", combo: "stle", ipa: "/səl/", rule: "t不发音，le发成音节/l/。", examples: "whistle（口哨）、castle（城堡）、bustle（喧闹）" },
-        { type: "4字母组合", category: "辅音类", combo: "mble", ipa: "/mbəl/", rule: "b不发音，le发成音节/əl/。", examples: "crumble（弄碎）、thimble（顶针）、tumble（跌倒）" },
-        { type: "4字母组合", category: "辅音类", combo: "ndle", ipa: "/ndəl/", rule: "nd发/nd/，le发成音节/əl/。", examples: "candle（蜡烛）、handle（把手）、bundle（捆）" },
-        { type: "4字母组合", category: "辅音类", combo: "zzle", ipa: "/zəl/", rule: "zz发浊辅音/z/，le发成音节/əl/。", examples: "puzzle（谜题）、drizzle（毛毛雨）、muzzle（口套）" },
-
-        // 二、3 字母组合
-        { type: "3字母组合", category: "元音类", combo: "air", ipa: "/eə/", rule: "发双元音+r音 /eə/。", examples: "air（空气）、hair（头发）、chair（椅子）" },
-        { type: "3字母组合", category: "元音类", combo: "are", ipa: "/eə/", rule: "词尾发 /eə/，e不发音。", examples: "care（关心）、share（分享）、bare（赤裸的）" },
-        { type: "3字母组合", category: "元音类", combo: "ear", ipa: "/ɪə/ 或 /eə/ 或 /ɜˇ/", rule: "多重发音：常发 /ɪə/，部分发 /eə/ 或 /ɜˇ/。", examples: "hear（听见）、bear（熊）、learn（学习）" },
-        { type: "3字母组合", category: "元音类", combo: "eer", ipa: "/ɪə/", rule: "发双元音+r音 /ɪə/。", examples: "beer（啤酒）、deer（鹿）、cheer（欢呼）" },
-        { type: "3字母组合", category: "元音类", combo: "eir", ipa: "/eə/ 或 /ɜˇ/", rule: "发双元音+r音 /eə/ 或 /ɜˇ/。", examples: "their（他们的）、heir（继承人）、weird（奇怪的）" },
-        { type: "3字母组合", category: "元音类", combo: "oor", ipa: "/ɔˇ/ 或 /ʊə/", rule: "多发长元音 /ɔˇ/，少数发 /ʊə/。", examples: "door（门）、floor（地板）、poor（贫穷的）" },
-        { type: "3字母组合", category: "元音类", combo: "our", ipa: "/ɔˇ/ 或 /aʊə/", rule: "多重发音：常发 /ɔˇ/ 或 /aʊə/。", examples: "four（四）、your（你的）、hour（小时）" },
-        { type: "3字母组合", category: "元音类", combo: "oar", ipa: "/ɔˇ/", rule: "发长元音+r音 /ɔˇ/。", examples: "roar（咆哮）、board（木板）、coat（外套无r时为oa）" },
-        { type: "3字母组合", category: "元音类", combo: "ore", ipa: "/ɔˇ/", rule: "词尾发长元音+r音 /ɔˇ/。", examples: "store（商店）、more（更多）、core（核心）" },
-        { type: "3字母组合", category: "元音类", combo: "ire", ipa: "/aɪə/", rule: "发双元音+r音 /aɪə/。", examples: "fire（火）、tire（轮胎）、wire（电线）" },
-        { type: "3字母组合", category: "元音类", combo: "ure", ipa: "/jʊə/ 或 /ʊə/", rule: "常发 /jʊə/（辅音后）或 /ʊə/。", examples: "pure（纯的）、cure（治愈）、sure（确信的）" },
-        { type: "3字母组合", category: "元音类", combo: "igh", ipa: "/aɪ/", rule: "发长元音 /aɪ/，gh完全不发音。", examples: "high（高的）、light（光）、night（夜晚）" },
-        { type: "3字母组合", category: "元音类", combo: "aul", ipa: "/ɔˇl/", rule: "au发 /ɔˇ/，l发舌尖音/l/。", examples: "call（打电话）、tall（高的）、ball（球）" },
-        { type: "3字母组合", category: "元音类", combo: "eau", ipa: "/juˇ/ 或 /əʊ/", rule: "词尾常发 /əʊ/（plateau），部分发 /juˇ/。", examples: "beauty（美丽）、plateau（高原）、bureau（局）" },
-        { type: "3字母组合", category: "元音类", combo: "iew", ipa: "/juˇ/", rule: "发 /juˇ/，通常在词尾。", examples: "view（风景）、review（复习）、interview（面试）" },
-        { type: "3字母组合", category: "辅音类", combo: "tch", ipa: "/tʃ/", rule: "发 /tʃ/，通常跟在单短元音后面。", examples: "watch（手表）、catch（抓住）、match（比赛）" },
-        { type: "3字母组合", category: "辅音类", combo: "dge", ipa: "/dʒ/", rule: "发 /dʒ/，通常跟在单短元音后面，保护短元音。", examples: "badge（徽章）、edge（边缘）、bridge（桥）" },
-        { type: "3字母组合", category: "辅音类", combo: "spl", ipa: "/spl/", rule: "辅音连缀，发 /spl/。", examples: "splash（溅起）、split（分裂）、splice（拼接）" },
-        { type: "3字母组合", category: "辅音类", combo: "spr", ipa: "/spr/", rule: "辅音连缀，发 /spr/。", examples: "spring（春天）、spread（传播）、sprain（扭伤）" },
-        { type: "3字母组合", category: "辅音类", combo: "str", ipa: "/str/", rule: "辅音连缀，发 /str/。", examples: "street（街道）、strong（强壮的）、straw（稻草）" },
-        { type: "3字母组合", category: "辅音类", combo: "shr", ipa: "/ʃr/", rule: "sh发/ʃ/，r发/r/。", examples: "shrink（收缩）、shred（碎片）、shrimp（虾）" },
-        { type: "3字母组合", category: "辅音类", combo: "squ", ipa: "/skw/", rule: "发 /skw/（u在此处作半元音）。", examples: "square（广场）、squirrel（松鼠）、squat（蹲坐）" },
-        { type: "3字母组合", category: "辅音类", combo: "scr", ipa: "/skr/", rule: "辅音连缀，发 /skr/。", examples: "screen（屏幕）、scratch（抓痒）、scream（尖叫）" },
-        { type: "3字母组合", category: "辅音类", combo: "thr", ipa: "/θr/", rule: "th发/θ/，r发/r/。", examples: "three（三）、throw（扔）、thread（线）" },
-        { type: "3字母组合", category: "辅音类", combo: "sch", ipa: "/sk/", rule: "发 /sk/。", examples: "school（学校）、schedule（日程）、scheme（计划）" },
-        { type: "3字母组合", category: "辅音类", combo: "nct", ipa: "/ŋkt/", rule: "n在k前发鼻音/ŋ/，ct发/kt/。", examples: "distinct（明显的）、extinct（灭绝的）、junction（连接处）" },
-        { type: "3字母组合", category: "辅音类", combo: "mpt", ipa: "/mpt/", rule: "辅音连缀，发 /mpt/。", examples: "prompt（迅速的）、exempt（免除）、attempt（尝试）" },
-        { type: "3字母组合", category: "辅音类", combo: "mph", ipa: "/mf/", rule: "m发/m/，ph发/f/。", examples: "elephant（大象）、graph（图表）、triumph（胜利）" },
-        { type: "3字母组合", category: "特殊规则", combo: "nch", ipa: "/ntʃ/", rule: "n发/n/，ch发/tʃ/。", examples: "lunch（午餐）、bench（长椅）、punch（击打）" },
-        { type: "3字母组合", category: "特殊规则", combo: "dle", ipa: "/dəl/", rule: "d发/d/，le发成音节/əl/。", examples: "candle（蜡烛）、middle（中间）、noodle（面条）" },
-        { type: "3字母组合", category: "特殊规则", combo: "ple", ipa: "/pəl/", rule: "p发/p/，le发成音节/əl/。", examples: "apple（苹果）、people（人们）、purple（紫色）" },
-        { type: "3字母组合", category: "特殊规则", combo: "tle", ipa: "/təl/", rule: "t发/t/，le发成音节/əl/。", examples: "little（小的）、bottle（瓶子）、turtle（海龟）" },
-        // 新增：ing 加入 3字母组合，避免被拆分成 i - ng
-        { type: "3字母组合", category: "特殊规则", combo: "ing", ipa: "/ɪŋ/", rule: "常作为动词现在分词或名词后缀，发/ɪŋ/。", examples: "sing（唱歌）、king（国王）、morning（早晨）" },
-
-        // 三、2 字母组合
-        { type: "2字母组合", category: "元音类", combo: "ai", ipa: "/eɪ/", rule: "发双元音 /eɪ/，通常在词中。", examples: "rain（雨）、wait（等待）、paint（绘画）" },
-        { type: "2字母组合", category: "元音类", combo: "ay", ipa: "/eɪ/", rule: "发双元音 /eɪ/，通常在词尾。", examples: "day（白天）、play（玩耍）、say（说）" },
-        { type: "2字母组合", category: "元音类", combo: "ee", ipa: "/iˇ/", rule: "发长元音 /iˇ/。", examples: "see（看见）、tree（树）、sleep（睡觉）" },
-        { type: "2字母组合", category: "元音类", combo: "ea", ipa: "/iˇ/ 或 /e/", rule: "最常发长元音 /iˇ/，少数发短元音 /e/。", examples: "eat（吃）、meat（肉）、bread（面包）" },
-        { type: "2字母组合", category: "元音类", combo: "oa", ipa: "/əʊ/", rule: "发长元音 /əʊ/，通常在词中。", examples: "boat（船）、road（路）、goat（山羊）" },
-        { type: "2字母组合", category: "元音类", combo: "oe", ipa: "/əʊ/", rule: "发长元音 /əʊ/，通常在词尾。", examples: "toe（脚趾）、foe（敌人）、hoe（锄头）" },
-        { type: "2字母组合", category: "元音类", combo: "ow", ipa: "/əʊ/ 或 /aʊ/", rule: "发 /əʊ/ 或 /aʊ/。", examples: "snow（雪）、yellow（黄色）、cow（奶牛）" },
-        { type: "2字母组合", category: "元音类", combo: "oo", ipa: "/uˇ/ 或 /ʊ/", rule: "常发长 /uˇ/，部分发短 /ʊ/。", examples: "moon（月亮）、book（书）、look（看）" },
-        { type: "2字母组合", category: "元音类", combo: "au", ipa: "/ɔˇ/", rule: "发长元音 /ɔˇ/，通常在词中。", examples: "autumn（秋天）、August（八月）、aunt（阿姨）" },
-        { type: "2字母组合", category: "元音类", combo: "aw", ipa: "/ɔˇ/", rule: "发长元音 /ɔˇ/。", examples: "draw（画画）、saw（看见）、law（法律）" },
-        { type: "2字母组合", category: "元音类", combo: "oi", ipa: "/ɔɪ/", rule: "发双元音 /ɔɪ/，通常在词中。", examples: "oil（油）、coin（硬币）、noise（噪音）" },
-        { type: "2字母组合", category: "元音类", combo: "oy", ipa: "/ɔɪ/", rule: "发双元音 /ɔɪ/，通常在词尾。", examples: "boy（男孩）、toy（玩具）、enjoy（享受）" },
-        { type: "2字母组合", category: "元音类", combo: "ou", ipa: "/aʊ/", rule: "最常发双元音 /aʊ/。", examples: "out（外面）、house（房子）、cloud（云）" },
-        { type: "2字母组合", category: "元音类", combo: "ue", ipa: "/uˇ/", rule: "发长元音 /uˇ/，通常在词尾。", examples: "blue（蓝色）、clue（线索）、glue（胶水）" },
-        { type: "2字母组合", category: "元音类", combo: "ew", ipa: "/juˇ/ 或 /uˇ/", rule: "发 /juˇ/ 或 /uˇ/（在l,r,j后）。", examples: "new（新的）、few（很少）、flew（飞）" },
-        { type: "2字母组合", category: "元音类", combo: "ie", ipa: "/iˇ/ 或 /aɪ/", rule: "词中常发 /iˇ/，词尾常发 /aɪ/。", examples: "piece（块）、pie（派）、tie（领带）" },
-        { type: "2字母组合", category: "元音类", combo: "ei", ipa: "/iˇ/ 或 /eɪ/", rule: "常发 /iˇ/ (在c后) 或 /eɪ/。", examples: "ceiling（天花板）、vein（静脉）、receive（收到）" },
-        { type: "2字母组合", category: "元音类", combo: "ui", ipa: "/uˇ/ 或 /ɪ/", rule: "常发 /uˇ/(fruit)，有时发 /ɪ/(build)。", examples: "fruit（水果）、build（建造）、guide（向导发/aɪ/）" },
-        { type: "2字母组合", category: "元音类", combo: "ye", ipa: "/aɪ/", rule: "通常在词尾，发双元音 /aɪ/。", examples: "dye（染色）、rye（黑麦）、bye（再见）" },
-        { type: "2字母组合", category: "R控制元音", combo: "ar", ipa: "/ɑˇ/", rule: "r控制元音，发 /ɑˇ/。", examples: "car（汽车）、far（远的）、star（星星）" },
-        { type: "2字母组合", category: "R控制元音", combo: "er", ipa: "/ɜˇ/ 或 /ə/", rule: "r控制元音，发 /ɜˇ/，非重读常发 /ə/。", examples: "her（她的）、teacher（老师）、worker（工人）" },
-        { type: "2字母组合", category: "R控制元音", combo: "ir", ipa: "/ɜˇ/", rule: "r控制元音，发 /ɜˇ/。", examples: "bird（鸟）、girl（女孩）、first（第一）" },
-        { type: "2字母组合", category: "R控制元音", combo: "or", ipa: "/ɔˇ/ 或 /ɜˇ/", rule: "r控制元音，多发 /ɔˇ/，少数发 /ɜˇ/。", examples: "fork（叉子）、for（为了）、word（单词）" },
-        { type: "2字母组合", category: "R控制元音", combo: "ur", ipa: "/ɜˇ/", rule: "r控制元音，发 /ɜˇ/。", examples: "nurse（护士）、turn（转动）、purple（紫色）" },
-        { type: "2字母组合", category: "辅音类", combo: "ch", ipa: "/tʃ/ 或 /k/", rule: "常发 /tʃ/，源自希腊语的词发 /k/。", examples: "chair（椅子）、lunch（午餐）、school（学校）" },
-        { type: "2字母组合", category: "辅音类", combo: "sh", ipa: "/ʃ/", rule: "发 /ʃ/。", examples: "ship（轮船）、shop（商店）、fish（鱼）" },
-        { type: "2字母组合", category: "辅音类", combo: "th", ipa: "/θ/ 或 /ð/", rule: "无声发清辅音 /θ/，有声发浊辅音 /ð/。", examples: "thin（瘦的）、thank（感谢）、this（这个）" },
-        { type: "2字母组合", category: "辅音类", combo: "ph", ipa: "/f/", rule: "发 /f/。", examples: "phone（电话）、photo（照片）、graph（图表）" },
-        { type: "2字母组合", category: "辅音类", combo: "ng", ipa: "/ŋ/", rule: "发鼻音 /ŋ/。", examples: "sing（唱歌）、long（长的）、king（国王）" },
-        { type: "2字母组合", category: "辅音类", combo: "ck", ipa: "/k/", rule: "发 /k/，通常跟在单短元音后面。", examples: "back（后面）、kick（踢）、clock（时钟）" },
-        { type: "2字母组合", category: "辅音类", combo: "qu", ipa: "/kw/", rule: "发 /kw/（u在此处作半元音）。", examples: "queen（女王）、quick（快的）、quiet（安静的）" },
-        { type: "2字母组合", category: "辅音类", combo: "wh", ipa: "/w/ 或 /h/", rule: "常发 /w/，少数（后接o时）发 /h/。", examples: "what（什么）、white（白色）、who（谁）" },
-        { type: "2字母组合", category: "辅音类", combo: "bl", ipa: "/bl/", rule: "辅音连缀，发 /bl/。", examples: "black（黑色）、blue（蓝色）、blast（爆炸）" },
-        { type: "2字母组合", category: "辅音类", combo: "cl", ipa: "/kl/", rule: "辅音连缀，发 /kl/。", examples: "clock（时钟）、class（班级）、clap（拍手）" },
-        { type: "2字母组合", category: "辅音类", combo: "fl", ipa: "/fl/", rule: "辅音连缀，发 /fl/。", examples: "flag（旗帜）、fly（飞）、flower（花）" },
-        { type: "2字母组合", category: "辅音类", combo: "gl", ipa: "/gl/", rule: "辅音连缀，发 /gl/。", examples: "glass（玻璃）、glad（高兴的）、globe（地球）" },
-        { type: "2字母组合", category: "辅音类", combo: "pl", ipa: "/pl/", rule: "辅音连缀，发 /pl/。", examples: "plate（盘子）、plane（飞机）、play（玩耍）" },
-        { type: "2字母组合", category: "辅音类", combo: "sl", ipa: "/sl/", rule: "辅音连缀，发 /sl/。", examples: "slow（慢的）、sleep（睡觉）、slide（滑动）" },
-        { type: "2字母组合", category: "辅音类", combo: "br", ipa: "/br/", rule: "辅音连缀，发 /br/。", examples: "bread（面包）、brown（棕色）、brother（兄弟）" },
-        { type: "2字母组合", category: "辅音类", combo: "cr", ipa: "/kr/", rule: "辅音连缀，发 /kr/。", examples: "crab（螃蟹）、cry（哭）、crowd（人群）" },
-        { type: "2字母组合", category: "辅音类", combo: "dr", ipa: "/dr/", rule: "辅音连缀，发 /dr/。", examples: "drink（喝）、drive（驾驶）、dress（连衣裙）" },
-        { type: "2字母组合", category: "辅音类", combo: "fr", ipa: "/fr/", rule: "辅音连缀，发 /fr/。", examples: "frog（青蛙）、fruit（水果）、front（前面）" },
-        { type: "2字母组合", category: "辅音类", combo: "gr", ipa: "/gr/", rule: "辅音连缀，发 /gr/。", examples: "green（绿色）、grape（葡萄）、grass（草）" },
-        { type: "2字母组合", category: "辅音类", combo: "pr", ipa: "/pr/", rule: "辅音连缀，发 /pr/。", examples: "pray（祈祷）、present（礼物）、press（按压）" },
-        { type: "2字母组合", category: "辅音类", combo: "tr", ipa: "/tr/", rule: "辅音连缀，发 /tr/。", examples: "tree（树）、train（火车）、trip（旅行）" },
-        { type: "2字母组合", category: "辅音类", combo: "sc", ipa: "/sk/ 或 /s/", rule: "常发 /sk/，在e/i前常发 /s/。", examples: "scan（扫描）、science（科学）、scale（规模）" },
-        { type: "2字母组合", category: "辅音类", combo: "sk", ipa: "/sk/", rule: "辅音连缀，发 /sk/。", examples: "sky（天空）、skin（皮肤）、skip（跳）" },
-        { type: "2字母组合", category: "辅音类", combo: "sm", ipa: "/sm/", rule: "辅音连缀，发 /sm/。", examples: "small（小的）、smile（微笑）、smoke（烟）" },
-        { type: "2字母组合", category: "辅音类", combo: "sn", ipa: "/sn/", rule: "辅音连缀，发 /sn/。", examples: "snow（雪）、snake（蛇）、sniff（吸鼻子）" },
-        { type: "2字母组合", category: "辅音类", combo: "sp", ipa: "/sp/", rule: "辅音连缀，发 /sp/。", examples: "spin（旋转）、spot（斑点）、spoon（勺子）" },
-        { type: "2字母组合", category: "辅音类", combo: "st", ipa: "/st/", rule: "辅音连缀，发 /st/。", examples: "stop（停止）、test（测试）、fast（快的）" },
-        { type: "2字母组合", category: "辅音类", combo: "sw", ipa: "/sw/", rule: "辅音连缀，发 /sw/。", examples: "swim（游泳）、sweet（甜的）、swing（摇摆）" },
-        { type: "2字母组合", category: "辅音类", combo: "tw", ipa: "/tw/", rule: "辅音连缀，发 /tw/。", examples: "twin（双胞胎）、twelve（十二）、twist（扭曲）" },
-        { type: "2字母组合", category: "特殊规则", combo: "nk", ipa: "/ŋk/", rule: "n在k前发鼻音/ŋ/，k发/k/。", examples: "sink（下沉）、think（思考）、bank（银行）" },
-        { type: "2字母组合", category: "特殊规则", combo: "nd", ipa: "/nd/", rule: "辅音连缀，发 /nd/。", examples: "hand（手）、end（结束）、find（找到）" },
-        { type: "2字母组合", category: "特殊规则", combo: "nt", ipa: "/nt/", rule: "辅音连缀，发 /nt/。", examples: "ant（蚂蚁）、tent（帐篷）、want（想要）" },
-        { type: "2字母组合", category: "特殊规则", combo: "mp", ipa: "/mp/", rule: "辅音连缀，发 /mp/。", examples: "jump（跳）、lamp（台灯）、camp（露营）" },
-        { type: "2字母组合", category: "特殊规则", combo: "lk", ipa: "/lk/", rule: "l常不发音，只发 /k/。", examples: "milk（牛奶）、walk（走）、talk（说话）" },
-        { type: "2字母组合", category: "特殊规则", combo: "ld", ipa: "/ld/", rule: "辅音连缀，发 /ld/。", examples: "old（老的）、cold（冷的）、hold（握住）" },
-        { type: "2字母组合", category: "特殊规则", combo: "lf", ipa: "/lf/", rule: "辅音连缀，发 /lf/。", examples: "self（自己）、half（一半）、shelf（架子）" },
-        { type: "2字母组合", category: "特殊规则", combo: "kn", ipa: "/n/", rule: "k不发音，只发 /n/。", examples: "knife（刀）、know（知道）、knight（骑士）" },
-        { type: "2字母组合", category: "特殊规则", combo: "wr", ipa: "/r/", rule: "w不发音，只发 /r/。", examples: "write（写）、wrong（错误的）、wrap（包裹）" },
-        { type: "2字母组合", category: "特殊规则", combo: "gn", ipa: "/n/", rule: "g不发音，只发 /n/。", examples: "sign（标志）、design（设计）、gnaw（啃咬）" },
-        { type: "2字母组合", category: "特殊规则", combo: "mb", ipa: "/m/", rule: "词尾b不发音，只发 /m/。", examples: "comb（梳子）、bomb（炸弹）、climb（爬）" },
-        { type: "2字母组合", category: "特殊规则", combo: "mn", ipa: "/m/", rule: "词尾n不发音，只发 /m/。", examples: "autumn（秋天）、solemn（庄严的）、hymn（赞美诗）" },
-        { type: "2字母组合", category: "特殊规则", combo: "bt", ipa: "/t/", rule: "词中或词尾b不发音，只发 /t/。", examples: "doubt（怀疑）、debt（债务）、subtle（微妙的）" },
-        { type: "2字母组合", category: "特殊规则", combo: "ps", ipa: "/s/", rule: "在词首时p不发音，只发 /s/。", examples: "psychology（心理学）、psalm（赞美诗）" }
-    ];
-
-    // 合并内置词库字典
-    const builtinBanks = {
-        "default6shang": defaultWordBank6shang,
-        "default6xia": defaultWordBank6xia
-    };
-
-    // ==========================================================
-    // 三、全局状态管理
-    // ==========================================================
-    let currentBankType = 'uploaded'; // 当前使用的词库类型
-    let currentWordIndex = 0;        // 当前单词索引
-    let uploadedWordBank = [];       // 上传的词库单词列表
-    let uploadedText = "";           // 上传的文档纯文本内容
+    let currentWordIndex = 0;
+    let wordBank = []; // 统一使用一个词库数组
     
-    // 音频对象，用于有道词典发音
     const audio = new Audio();
 
     // ==========================================================
-    // 四、核心功能实现
+    // 核心功能实现
     // ==========================================================
-
-    // 获取当前词库数组
-    function getCurrentBank() {
-        if (currentBankType === 'uploaded') return uploadedWordBank;
-        return builtinBanks[currentBankType] || [];
-    }
 
     // 1. 发音功能（有道API + 变速不变调）
     function playAudio(rate) {
         const word = document.getElementById('wordText').textContent;
-        if (!word || word === "暂无单词") return;
-        // 固定 type=2 使用女声发音
+        if (!word || word === "正在加载词库..." || word === "暂无单词") return;
         audio.src = `https://dict.youdao.com/dictvoice?audio=${word}&type=2`;
-        
-        // 确保音调不变仅改变语速（HTML5 Audio 原生支持 playbackRate）
         audio.playbackRate = rate;
-        
-        // 部分浏览器需要设置 preservesPitch 确保不变调
         audio.preservesPitch = true;
         audio.mozPreservesPitch = true;
         audio.webkitPreservesPitch = true;
-
         audio.play().catch(e => console.error("发音播放失败:", e));
     }
 
-    // 8. 例词女声发音功能（新增功能）
+    // 2. 例词发音功能
     function playExampleWord(word) {
-        // 清除可能存在的非字母字符（保留连字符）
         const cleanWord = word.replace(/[^a-zA-Z-]/g, '');
         if (!cleanWord) return;
         const exampleAudio = new Audio();
-        // 固定 type=2 使用女声发音
         exampleAudio.src = `https://dict.youdao.com/dictvoice?audio=${cleanWord}&type=2`;
         exampleAudio.playbackRate = 1.0;
         exampleAudio.preservesPitch = true;
@@ -478,93 +330,9 @@
         exampleAudio.play().catch(e => console.error("例词发音播放失败:", e));
     }
 
-    // 9. 动态强制划词匹配函数（新增功能：遵循降序法则和锁定原则）
-    function getPhonicsSplit(word, splitRule) {
-        if (!word) return "";
-        const lowerWord = word.toLowerCase();
-        
-        // 预提取组合库
-        const combos4 = new Set();
-        const combos3 = new Set();
-        const combos2 = new Set();
-        if (typeof phonicsCombosData !== 'undefined') {
-            phonicsCombosData.forEach(item => {
-                if (item.type === '4字母组合') combos4.add(item.combo);
-                else if (item.type === '3字母组合') combos3.add(item.combo);
-                else if (item.type === '2字母组合') combos2.add(item.combo);
-            });
-        }
-
-        // 尝试从 splitRule 提取音节块
-        let syllableParts = [];
-        if (splitRule) {
-            const cleanSplit = splitRule.replace(/（.*?）/g, '').replace(/[+·\s]+/g, ' ').trim();
-            if (cleanSplit) {
-                let tempParts = cleanSplit.split(' ').filter(s => s);
-                // 检查提取出的音节拼接起来是否等于原单词（去除空格），避免规则不完整导致截断
-                const combined = tempParts.join('').toLowerCase();
-                const cleanOriginalWord = lowerWord.replace(/\s/g, '');
-                if (combined === cleanOriginalWord) {
-                    syllableParts = tempParts;
-                }
-            }
-        }
-
-        // 如果未提取到有效音节，则按单词（空格分隔）作为整体进行匹配
-        if (syllableParts.length === 0) {
-            syllableParts = lowerWord.split(/\s+/);
-        }
-
-        let syllableResults = [];
-        syllableParts.forEach(part => {
-            if (!part) return;
-            let partResult = [];
-            let i = 0;
-            while (i < part.length) {
-                let matched = false;
-                // Step 1: 4音节优先匹配
-                if (i + 4 <= part.length) {
-                    const sub4 = part.substring(i, i + 4);
-                    if (combos4.has(sub4)) {
-                        partResult.push(sub4);
-                        i += 4;
-                        continue;
-                    }
-                }
-                // Step 2: 3音节其次匹配
-                if (i + 3 <= part.length) {
-                    const sub3 = part.substring(i, i + 3);
-                    if (combos3.has(sub3)) {
-                        partResult.push(sub3);
-                        i += 3;
-                        continue;
-                    }
-                }
-                // Step 3: 2音节再次匹配
-                if (i + 2 <= part.length) {
-                    const sub2 = part.substring(i, i + 2);
-                    if (combos2.has(sub2)) {
-                        partResult.push(sub2);
-                        i += 2;
-                        continue;
-                    }
-                }
-                // Step 4: 1音节最后匹配
-                partResult.push(part.substring(i, i + 1));
-                i += 1;
-            }
-            if (partResult.length > 0) {
-                syllableResults.push(partResult.join(' - '));
-            }
-        });
-        
-        return syllableResults.join(' | ');
-    }
-
-    // 2. 显示当前单词
+    // 3. 显示当前单词
     function displayWord() {
-        const bank = getCurrentBank();
-        if (bank.length === 0) {
+        if (wordBank.length === 0) {
             document.getElementById('wordText').textContent = "暂无单词";
             document.getElementById('wordPos').textContent = "请上传词库文档";
             document.getElementById('wordMeaning').textContent = "";
@@ -573,346 +341,157 @@
             return;
         }
         
-        // 防止越界
-        if (currentWordIndex >= bank.length) currentWordIndex = 0;
+        if (currentWordIndex >= wordBank.length) currentWordIndex = 0;
         
-        const currentWord = bank[currentWordIndex];
+        const currentWord = wordBank[currentWordIndex];
         document.getElementById('wordText').textContent = currentWord.word;
-        document.getElementById('wordPos').textContent = currentWord.pos || "";
-        document.getElementById('wordMeaning').textContent = currentWord.meaning || "";
         
-        // 更新计数显示
-        document.getElementById('wordIndex').textContent = `第 ${currentWordIndex + 1} / ${bank.length} 个`;
+        // 适配你的词库格式
+        const meaningStr = currentWord.meaning || "";
+        const posMatch = meaningStr.match(/\[(.*?)\]/);
+        document.getElementById('wordPos').textContent = posMatch ? posMatch[0] : "";
+        document.getElementById('wordMeaning').textContent = meaningStr.replace(/\[.*?\]/, '').trim();
         
-        // 重置解析面板
+        document.getElementById('wordIndex').textContent = `第 ${currentWordIndex + 1} / ${wordBank.length} 个`;
         document.getElementById('analysisPanel').style.display = 'none';
     }
 
-    // 3. 切换下一个单词
+    // 4. 切换下一个单词
     function nextWord() {
-        const bank = getCurrentBank();
-        if (bank.length === 0) return;
-        currentWordIndex = (currentWordIndex + 1) % bank.length;
+        if (wordBank.length === 0) return;
+        currentWordIndex = (currentWordIndex + 1) % wordBank.length;
         displayWord();
     }
 
-    // 4. 文件上传与解析逻辑
+    // 5. 自动从 GitHub 仓库加载词库
+    async function loadDefaultBank() {
+        try {
+            // 尝试请求同目录下的 wordbank.json
+            const response = await fetch('./wordbank.json');
+            if (response.ok) {
+                const data = await response.json();
+                processJsonData(data);
+                console.log("自动加载仓库词库成功！");
+            } else {
+                throw new Error("未找到词库");
+            }
+        } catch (err) {
+            console.warn("自动加载失败，等待手动上传。", err);
+            document.getElementById('wordText').textContent = "暂无单词";
+            document.getElementById('wordPos').textContent = "请上传词库文档";
+        }
+    }
+
+    // 6. 手动上传文件解析逻辑
     document.getElementById('fileInput').addEventListener('change', async (event) => {
         const file = event.target.files[0];
         if (!file) return;
 
-        if (file.name.endsWith('.docx')) {
-            // 使用 mammoth.js 解析 docx
-            const arrayBuffer = await file.arrayBuffer();
-            mammoth.extractRawText({ arrayBuffer: arrayBuffer })
-                .then(result => {
-                    uploadedText = result.value;
-                    processUploadedText();
-                })
-                .catch(err => alert("解析Docx失败: " + err));
-        } else if (file.name.endsWith('.txt')) {
+        if (file.name.endsWith('.json')) {
             const text = await file.text();
-            uploadedText = text;
-            processUploadedText();
+            try {
+                const data = JSON.parse(text);
+                processJsonData(data);
+                alert(`成功提取 ${wordBank.length} 个单词！`);
+            } catch (err) {
+                alert("解析JSON失败，请检查格式: " + err.message);
+            }
         } else {
-            alert("请上传 .docx 或 .txt 格式文件");
+            alert("请上传 .json 格式的词库文件");
         }
     });
 
-    // 处理提取出的文档文本，生成词库
-    function processUploadedText() {
-        uploadedWordBank = [];
-        const lines = uploadedText.split('\n');
-        const wordSet = new Set();
-
-        lines.forEach(line => {
-            const match = line.match(/^([a-zA-Z]+(?:\s[a-zA-Z]+)?)\s*[①②③]/);
-            if (match) {
-                const word = match[1].trim();
-                if (!wordSet.has(word)) {
-                    wordSet.add(word);
-                    uploadedWordBank.push({
-                        word: word,
-                        pos: "见上传文档",
-                        meaning: "见上传文档",
-                        rawText: line
-                    });
-                }
-            }
-        });
-
-        if (uploadedWordBank.length === 0) {
-            const simpleRegex = /\b([a-zA-Z]{2,})\b/g;
-            let m;
-            while ((m = simpleRegex.exec(uploadedText)) !== null) {
-                if (!wordSet.has(m[1])) {
-                    wordSet.add(m[1]);
-                    uploadedWordBank.push({ word: m[1], pos: "未知", meaning: "未知", rawText: "" });
-                }
-            }
-        }
-
-        if (uploadedWordBank.length > 0) {
-            alert(`成功提取 ${uploadedWordBank.length} 个单词！已自动切换至上传词库。`);
-            document.getElementById('bankSwitcher').value = 'uploaded';
-            currentBankType = 'uploaded';
-            currentWordIndex = 0;
-            displayWord();
-        } else {
-            alert("未能从文档中提取有效单词，请检查文档格式。");
-        }
-    }
-
-    // 5. 词库切换逻辑
-    document.getElementById('bankSwitcher').addEventListener('change', (e) => {
-        currentBankType = e.target.value;
-        if (currentBankType === 'uploaded' && uploadedWordBank.length === 0) {
-            alert("您还未上传有效词库，请先点击上方按钮上传文档。");
+    // 7. 处理你的 JSON 词库数据，映射为内部统一格式
+    function processJsonData(data) {
+        if (!Array.isArray(data)) {
+            alert("词库格式错误：根目录必须是一个数组 []");
             return;
         }
+        
+        wordBank = data.map(item => {
+            return {
+                word: item["英语单词"] || "",
+                meaning: item["中文解释"] || "",
+                ipa: item["国际音标"] || "",
+                splitRule: item["音节划分"] || "",
+                splitReason: item["音节划分研判"] || "",
+                stress: item["重音位置"] || "",
+                stressReason: item["重音研判"] || "",
+                breakdown: item["字母与音标的对应关系（拆解）"] || []
+            };
+        });
+
         currentWordIndex = 0;
         displayWord();
-    });
+    }
 
-    // 6. 自然拼读深度解析核心逻辑（无语音朗读）
+    // 8. 深度解析逻辑 (全新适配)
     function analyzeWord() {
-        const bank = getCurrentBank();
-        if (bank.length === 0) {
-            alert("词库为空，请先上传文档！");
+        if (wordBank.length === 0) {
+            alert("词库为空，请先上传！");
             return;
         }
-        const currentWord = bank[currentWordIndex];
+        const currentWord = wordBank[currentWordIndex];
         
-        if (!currentWord) return;
-
-        let analysisData;
-        let isFallback = false;
-
-        if (currentBankType !== 'uploaded') {
-            analysisData = currentWord;
-        } else {
-            analysisData = extractAnalysisFromText(currentWord);
-            if (!analysisData) {
-                analysisData = fallbackAnalysis(currentWord.word);
-                isFallback = true;
-            }
-        }
-
-        renderAnalysis(analysisData, isFallback);
-    }
-
-    function extractAnalysisFromText(currentWord) {
-        if (!currentWord.rawText) return null;
-        const text = currentWord.rawText;
-        let ipaMatch = text.match(/\/(.*?)\//g);
-        let ipa = ipaMatch && ipaMatch.length > 0 ? ipaMatch[ipaMatch.length - 1] : "未提取到";
+        document.getElementById('ipaText').textContent = currentWord.ipa || "/暂无/";
         
-        return {
-            word: currentWord.word,
-            ipa: ipa,
-            splitRule: "见下方文档原文提取",
-            phonicsReason: "见下方文档原文提取",
-            comboReason: text, // 直接将原文档那一行展示在组合解析里
-            wholeRead: "请根据文档规则连读",
-            stress: "见文档规则"
-        };
-    }
-
-    function fallbackAnalysis(word) {
-        let lowerWord = word.toLowerCase();
-        let foundRules = [];
-        const defaultPhonicsRules = {
-            "a": "A的规则：开音节读/eɪ/，闭音节读/æ/，非重读发/ə/。",
-            "e": "E的规则：开音节读/iˇ/，闭音节读/e/，非重读发/ɪ/或/ə/。",
-            "i": "I的规则：开音节读/aɪ/，闭音节读/ɪ/。",
-            "o": "O的规则：开音节读/əʊ/，闭音节读/ɒ/。",
-            "u": "U的规则：开音节读/juˇ/，闭音节读/ʌ/。",
-            "ar": "AR组合：短单词发/ɑˇ/，长单词发/ə/，w后发/ɔˇ/。",
-            "or": "OR组合：词中发/ɔˇ/，w后发/ɜˇr/，词尾发/ər/。",
-            "sh": "SH组合：发/ʃ/。",
-            "ch": "CH组合：发/tʃ/，特例发/k/。",
-            "th": "TH组合：两头清/θ/，中间浊/ð/。",
-            "tion": "TION组合：发/ʃən/，s后发/tʃən/。"
-        };
-        
-        for(let key in defaultPhonicsRules) {
-            if(lowerWord.includes(key)) {
-                foundRules.push(`包含组合 "${key}"：${defaultPhonicsRules[key]}`);
-            }
-        }
-
-        // 增量修改：遍历全量组合音节数据库
-        for(let i = 0; i < phonicsCombosData.length; i++) {
-            const item = phonicsCombosData[i];
-            if(lowerWord.includes(item.combo)) {
-                foundRules.push(`包含组合 "${item.combo}"（${item.category}）：${item.rule} 示例：${item.examples}`);
-            }
-        }
-        
-        return {
-            word: word,
-            ipa: "未找到",
-            splitRule: "该单词规则未在上传文档中找到，已使用基础规则推断。",
-            phonicsReason: "基于本地基础规则库匹配。温馨提示：该单词规则未在上传文档中找到，已使用基础规则。",
-            comboReason: foundRules.length > 0 ? foundRules.join("；") : "未匹配到特殊组合",
-            wholeRead: "请尝试按基础元音辅音拼读",
-            stress: "未知"
-        };
-    }
-
-    // 7. 渲染解析结果到 UI
-    function renderAnalysis(data, isFallback) {
-        const panel = document.getElementById('analysisPanel');
-        const alertMsg = document.getElementById('alertMsg');
-        
-        document.getElementById('ipaText').textContent = data.ipa;
-        
-        // 确保整个英语单词的所有字母都列出来（按划词规则和单字母）
-        const cleanWord = data.word.replace(/\s/g, '');
-        const allLetters = cleanWord.split('').join(' - ');
-        // 从 splitRule 提取拼读块划分，去除括号说明
-        const splitParts = data.splitRule.replace(/（.*?）/g, '').replace(/·/g, ' - ').trim();
-        let splitPartsText = '';
-        // 只有当 splitParts 包含字母时，才显示组拼读块
-        if (/[a-zA-Z]/.test(splitParts)) {
-            splitPartsText = `\n组拼读块划分：${splitParts}`;
-        }
-
-        // 调用新增函数获取动态划词结果
-        const dynamicSplit = getPhonicsSplit(data.word, data.splitRule);
-        
-        // 新增：提取动态拼读块并构建每个拼读块的详细解析
-        const dynamicBlocks = dynamicSplit.split(' | ').join(' - ').split(' - ');
-        const comboText = data.comboReason || "";
-        let blockDetailsHtml = '';
-        
-        dynamicBlocks.forEach(block => {
-            if (!block) return;
-            let infoText = '';
-            let regex;
-            let match;
-
-            if (block.length > 1) {
-                // 1. 多字母组合
-                // 1.1 尝试从 comboReason 中匹配以该块开头的规则
-                regex = new RegExp(`【${block}[^】]*】[^【]*`, 'i');
-                match = comboText.match(regex);
-                if (match) {
-                    infoText = match[0].replace(/\n/g, ' ').trim();
-                } else {
-                    // 1.2 查全局库完全匹配
-                    let globalItem = phonicsCombosData.find(item => item.combo === block);
-                    if (globalItem) {
-                        infoText = `发${globalItem.ipa}。${globalItem.rule} 例：${globalItem.examples}`;
-                    } else {
-                        // 1.3 尝试从 comboReason 或全局库中匹配块中包含的子组合
-                        let found = false;
-                        for (let len = block.length - 1; len >= 2; len--) {
-                            for (let start = 0; start <= block.length - len; start++) {
-                                let subBlock = block.substring(start, start + len);
-                                let subRegex = new RegExp(`【${subBlock}[^】]*】[^【]*`, 'i');
-                                let subMatch = comboText.match(subRegex);
-                                if (subMatch) {
-                                    infoText = subMatch[0].replace(/\n/g, ' ').trim();
-                                    found = true;
-                                    break;
-                                }
-                                let subGlobalItem = phonicsCombosData.find(item => item.combo === subBlock);
-                                if (subGlobalItem) {
-                                    infoText = `发${subGlobalItem.ipa}。${subGlobalItem.rule} 例：${subGlobalItem.examples}`;
-                                    found = true;
-                                    break;
-                                }
-                            }
-                            if (found) break;
-                        }
-                    }
+        // 渲染拆解列表 (利用你JSON中的结构化数据)
+        let breakdownHtml = '';
+        if (currentWord.breakdown.length > 0) {
+            breakdownHtml = '<div class="breakdown-list">';
+            currentWord.breakdown.forEach(b => {
+                let examplesHtml = '例词：';
+                if (b["例词"] && b["例词"].length > 0) {
+                    b["例词"].forEach((w, i) => {
+                        let safeW = w.replace(/'/g, "\\'");
+                        examplesHtml += `<span class="example-word" onclick="playExampleWord('${safeW}')">${w}</span>`;
+                        if (i < b["例词"].length - 1) examplesHtml += ', ';
+                    });
                 }
-            } else {
-                // 2. 单字母
-                // 匹配 comboReason 中以该字母开头且后不接字母的规则，避免误匹配（如 e 匹配 e开音节，不匹配 ing组合）
-                regex = new RegExp(`【${block}(?![a-zA-Z])[^】]*】[^【]*`, 'g');
-                let matches = comboText.match(regex);
-                if (matches && matches.length > 0) {
-                    infoText = matches.map(m => m.replace(/\n/g, ' ').trim()).join(' 或 ');
-                } else {
-                    infoText = "按基础字母发音。";
-                }
-            }
-
-            // 如果以上都没找到，提示基础发音
-            if (!infoText) {
-                infoText = "按基础字母发音。";
-            }
-            
-            blockDetailsHtml += `<div style="margin-top: 5px;"><strong>${block}</strong>：${infoText}</div>`;
-        });
-
-        // 处理组合发音解析中的例词，使其可点击发音
-        let comboReasonHtml = data.comboReason || "";
-        // 匹配 "例:word1, word2。" 或 "例:word1, word2" 并替换为可点击的 span
-        comboReasonHtml = comboReasonHtml.replace(/例[:：]([\w ,，、。.-]+)/g, function(match, p1) {
-            let wordsStr = p1.trim();
-            let endChar = '';
-            // 提取末尾标点
-            if (wordsStr.endsWith('。') || wordsStr.endsWith('.')) {
-                endChar = wordsStr.slice(-1);
-                wordsStr = wordsStr.slice(0, -1).trim();
-            }
-            let words = wordsStr.split(/[,，、\s]+/).filter(w => w.length > 0);
-            if (words.length === 0) return match;
-            let html = '例:';
-            words.forEach((w, index) => {
-                let safeW = w.replace(/'/g, "\\'");
-                html += `<span class="example-word" onclick="playExampleWord('${safeW}')">${w}</span>`;
-                if (index < words.length - 1) {
-                    html += ', ';
-                }
+                
+                breakdownHtml += `
+                    <div class="breakdown-item">
+                        <div class="breakdown-header">
+                            <span class="breakdown-block">${b["字母组合"]}</span>
+                            <span class="breakdown-ipa">[${b["发音"]}]</span>
+                        </div>
+                        <div class="breakdown-rule">规则：${b["规则说明"]}</div>
+                        <div class="breakdown-rule">${examplesHtml}</div>
+                    </div>
+                `;
             });
-            html += endChar;
-            return html;
-        });
+            breakdownHtml += '</div>';
+        }
 
+        // 组合生成展示HTML
         const container = document.getElementById('stepsContainer');
         container.innerHTML = `
             <div class="step-card">
                 <div class="step-title">第一步：找元音，划音节 & 第二步：找辅音定组合</div>
-                <div class="step-content">${data.splitRule}
-【动态强制划词(降序法则)】：${dynamicSplit}</div>
-            </div>
-            <div class="step-card">
-                <div class="step-title">第三步：组拼读块 & 第四步：套规则发音（字母及组合发音）</div>
-                <div class="step-content">全词字母拆解：${allLetters}
-组拼读块划分：${dynamicSplit}
-
- ${blockDetailsHtml}</div>
+                <div class="step-content"><strong>音节划分：</strong>${currentWord.splitRule}
+<strong>划分研判：</strong>${currentWord.splitReason}</div>
             </div>
             <div class="step-card combo">
-                <div class="step-title">组合发音解析与口诀（针对当前单词）</div>
-                <div class="step-content">全词字母拆解：${allLetters}${splitPartsText}\n${comboReasonHtml}</div>
+                <div class="step-title">第三步：组拼读块 & 第四步：套规则发音</div>
+                <div class="step-content">全词字母拆解与规则对应如下：</div>
+                ${breakdownHtml}
             </div>
             <div class="step-card">
                 <div class="step-title">第五步：定重音</div>
-                <div class="step-content">${data.stress}</div>
+                <div class="step-content"><strong>重音位置：</strong>${currentWord.stress}
+<strong>重音研判：</strong>${currentWord.stressReason}</div>
             </div>
             <div class="step-card whole">
                 <div class="step-title">第六步：合成全词（整词拼读回顾）</div>
-                <div class="step-content">${data.wholeRead}</div>
+                <div class="step-content">国际音标整体发音：${currentWord.ipa}</div>
             </div>
         `;
 
-        if (isFallback) {
-            alertMsg.style.display = 'block';
-            alertMsg.textContent = "⚠️ 温馨提示：该单词规则未在上传文档中找到，已使用基础规则库匹配。";
-        } else {
-            alertMsg.style.display = 'none';
-        }
-
-        panel.style.display = 'block';
+        document.getElementById('analysisPanel').style.display = 'block';
     }
 
-    // 初始化页面
-    displayWord();
+    // 初始化页面：优先自动加载仓库内的词库
+    loadDefaultBank();
 </script>
 
 </body>
