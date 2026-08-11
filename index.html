@@ -3,30 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>自然拼读小课堂</title>
+    <title>自然拼读小课堂 - GitHub词库版</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
             font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
             background: linear-gradient(135deg, #e0f7fa 0%, #e8f5e9 100%);
-            color: #333; margin: 0; padding: 15px; min-height: 100vh;
-            display: flex; justify-content: center;
+            color: #333; margin: 0; padding: 15px; min-height: 100vh; display: flex; justify-content: center;
         }
         .container { width: 100%; max-width: 100vw; }
         header { text-align: center; margin-bottom: 20px; }
         h1 { color: #00897b; margin: 10px 0 15px; font-size: 24px; }
         .controls-top {
             display: flex; flex-direction: column; gap: 10px;
-            background: #fff; padding: 12px; border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            background: #fff; padding: 12px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
         .btn-upload {
-            background: #4db6ac; color: white; padding: 12px;
-            border-radius: 10px; font-size: 16px; font-weight: bold;
-            cursor: pointer; text-align: center; transition: background 0.2s;
+            background: #4db6ac; color: white; padding: 12px; border-radius: 10px;
+            font-size: 16px; font-weight: bold; cursor: pointer; text-align: center; transition: background 0.2s;
         }
         .btn-upload:active { background: #00897b; }
-        
+        select {
+            width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #b2dfdb;
+            font-size: 16px; background: white; color: #555;
+        }
         .card {
             background: white; border-radius: 24px; padding: 30px 20px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.08); text-align: center; margin-bottom: 20px;
@@ -36,27 +37,22 @@
             background: #f5f5f5; display: inline-block; padding: 4px 12px; border-radius: 10px;
         }
         .word-display h2 {
-            font-size: 42px; color: #00796b; margin: 10px 0;
-            font-weight: 800; letter-spacing: 1px; word-break: break-word;
+            font-size: 42px; color: #00796b; margin: 10px 0; font-weight: 800; letter-spacing: 1px; word-break: break-word;
         }
         .word-display p { font-size: 18px; color: #666; margin: 5px 0; }
         .word-display .pos { color: #ff7043; font-weight: bold; }
-
         .audio-controls { display: flex; justify-content: space-between; margin: 20px 0 15px; gap: 8px; }
         .audio-btn {
             flex: 1; padding: 12px 5px; border: none; border-radius: 12px;
-            background: #80cbc4; color: white; font-size: 14px; font-weight: bold;
-            cursor: pointer; transition: transform 0.1s;
+            background: #80cbc4; color: white; font-size: 14px; font-weight: bold; cursor: pointer; transition: transform 0.1s;
         }
         .audio-btn:active { transform: scale(0.95); background: #4db6ac; }
         .action-controls { display: flex; gap: 10px; }
         .btn-primary, .btn-secondary {
-            flex: 1; padding: 15px; border: none; border-radius: 12px;
-            font-size: 16px; font-weight: bold; color: white; cursor: pointer;
+            flex: 1; padding: 15px; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; color: white; cursor: pointer;
         }
         .btn-primary { background: #ff7043; flex: 2; }
         .btn-secondary { background: #ffb74d; }
-
         .analysis-panel {
             background: white; border-radius: 24px; padding: 20px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.08); display: none; animation: slideDown 0.4s ease;
@@ -64,52 +60,59 @@
         @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         .analysis-panel h3 { color: #00897b; border-bottom: 2px solid #e0f7fa; padding-bottom: 10px; margin-top: 0; }
         .step-card {
-            background: #f1f8e9; margin-bottom: 12px; padding: 15px;
-            border-radius: 12px; border-left: 5px solid #8bc34a; text-align: left;
+            background: #f1f8e9; margin-bottom: 12px; padding: 15px; border-radius: 12px;
+            border-left: 5px solid #8bc34a; text-align: left;
         }
         .step-card.combo { background: #fff3e0; border-left-color: #ff9800; }
         .step-card.whole { background: #e1f5fe; border-left-color: #03a9f4; }
-        .step-title { font-weight: bold; color: #558b2f; margin-bottom: 5px; font-size: 15px; }
+        .step-title { font-weight: bold; color: #558b2f; margin-bottom: 8px; font-size: 15px; }
         .step-card.combo .step-title { color: #ef6c00; }
         .step-card.whole .step-title { color: #0277bd; }
         .step-content { font-size: 15px; line-height: 1.6; color: #444; white-space: pre-wrap; }
         .ipa-badge {
-            display: inline-block; background: #00796b; color: white;
-            padding: 4px 12px; border-radius: 20px; font-size: 20px; font-weight: bold; margin-bottom: 10px;
+            display: inline-block; background: #00796b; color: white; padding: 4px 12px;
+            border-radius: 20px; font-size: 20px; font-weight: bold; margin-bottom: 10px;
         }
-        .breakdown-list { margin-top: 10px; }
+        .alert-box {
+            background: #fffde7; color: #fbc02d; padding: 10px; border-radius: 8px;
+            font-size: 14px; margin-bottom: 10px; border: 1px solid #fff9c4;
+        }
         .breakdown-item {
-            background: #fff; border: 1px solid #e0e0e0;
-            border-radius: 8px; padding: 10px; margin-bottom: 8px;
+            background: #fff; padding: 10px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #e0e0e0;
         }
-        .breakdown-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
-        .breakdown-block { background: #00796b; color: white; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
-        .breakdown-ipa { color: #d81b60; font-weight: bold; }
-        .breakdown-rule { font-size: 14px; color: #555; }
+        .breakdown-header { font-weight: bold; color: #00796b; margin-bottom: 4px; }
         .example-word {
-            color: #00796b; cursor: pointer; font-weight: bold;
-            text-decoration: underline; margin: 0 2px; display: inline-block;
+            color: #ff7043; cursor: pointer; font-weight: bold; text-decoration: underline; margin: 0 2px; display: inline-block;
         }
-        .example-word:active { color: #ff7043; transform: scale(0.95); }
+        .example-word:active { color: #d84315; transform: scale(0.95); }
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8);
+            display: none; justify-content: center; align-items: center; z-index: 999; font-size: 18px; color: #00897b;
+        }
     </style>
 </head>
 <body>
+
+<div class="loading-overlay" id="loadingOverlay">正在加载词库...</div>
 
 <div class="container">
     <header>
         <h1>自然拼读小课堂</h1>
         <div class="controls-top">
             <label class="btn-upload">
-                📁 手动上传词库 (JSON)
-                <input type="file" id="fileInput" accept=".json" style="display:none;">
+                📁 上传本地词库/规则文档
+                <input type="file" id="fileInput" accept=".docx,.txt,.json" style="display:none;">
             </label>
+            <select id="bankSwitcher">
+                <option value="">-- 请选择GitHub词库 --</option>
+            </select>
         </div>
     </header>
 
     <main class="card">
         <div class="word-display">
             <span id="wordIndex" class="index-badge">第 0 / 0 个</span>
-            <h2 id="wordText">正在加载词库...</h2>
+            <h2 id="wordText">加载中...</h2>
             <p id="wordPos" class="pos"></p>
             <p id="wordMeaning"></p>
         </div>
@@ -128,21 +131,131 @@
 
     <section class="analysis-panel" id="analysisPanel">
         <h3>自然拼读深度解析</h3>
+        <div id="alertMsg" class="alert-box" style="display:none;"></div>
         <div style="text-align:center;">
-            国际音标：<span id="ipaText" class="ipa-badge">/暂无/</span>
+            国际音标：<span id="ipaText" class="ipa-badge"></span>
         </div>
         <div id="stepsContainer"></div>
     </section>
 </div>
 
 <script>
-    let currentWordIndex = 0;
-    let wordBank = []; 
+    // ==========================================================
+    // 一、GitHub 词库配置清单
+    // 说明：以后你在 GitHub 仓库里新建了一个 JSON 文件，只需要在这里加一行即可。
+    // 请把 url 换成你 GitHub 仓库里 JSON 文件的 Raw 链接。
+    // ==========================================================
+    const githubBanks = [
+        { 
+            name: "六年级上册 (人教版)", 
+            url: "words6shang.json" // 本地测试用相对路径，上线 GitHub 后可保持相对路径不变
+        },
+        { 
+            name: "六年级下册 (人教版)", 
+            url: "words6xia.json" 
+        },
+        { 
+            name: "五年级上册 (示例)", 
+            url: "words5shang.json" 
+        }
+        // 继续添加更多词库...
+    ];
+
+    // ==========================================================
+    // 二、全局状态管理
+    // ==========================================================
+    let currentBank = [];           // 当前正在使用的单词数组
+    let currentWordIndex = 0;       // 当前单词索引
     const audio = new Audio();
+
+    // ==========================================================
+    // 三、初始化与词库加载
+    // ==========================================================
+    
+    // 初始化下拉菜单
+    function initBankSwitcher() {
+        const select = document.getElementById('bankSwitcher');
+        githubBanks.forEach((bank, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = bank.name;
+            select.appendChild(option);
+        });
+        
+        // 默认加载第一个词库
+        if (githubBanks.length > 0) {
+            select.value = 0;
+            loadBank(0);
+        }
+    }
+
+    // 加载指定的 GitHub 词库
+    async function loadBank(bankIndex) {
+        const overlay = document.getElementById('loadingOverlay');
+        overlay.style.display = 'flex';
+        
+        try {
+            const response = await fetch(githubBanks[bankIndex].url);
+            if (!response.ok) throw new Error('网络错误或文件不存在');
+            currentBank = await response.json();
+            currentWordIndex = 0;
+            displayWord();
+        } catch (error) {
+            console.error("加载词库失败:", error);
+            alert(`加载词库失败: ${error.message}\n请确保词库文件存在，且GitHub链接正确。`);
+            currentBank = [];
+            displayWord();
+        } finally {
+            overlay.style.display = 'none';
+        }
+    }
+
+    // 监听下拉框切换
+    document.getElementById('bankSwitcher').addEventListener('change', (e) => {
+        loadBank(e.target.value);
+    });
+
+    // ==========================================================
+    // 四、核心展示与解析逻辑 (适配新JSON结构)
+    // ==========================================================
+
+    function displayWord() {
+        if (currentBank.length === 0) {
+            document.getElementById('wordText').textContent = "无单词数据";
+            document.getElementById('wordIndex').textContent = "第 0 / 0 个";
+            return;
+        }
+        
+        if (currentWordIndex >= currentBank.length) currentWordIndex = 0;
+        const w = currentBank[currentWordIndex];
+        
+        document.getElementById('wordText').textContent = w["英语单词"] || "未知";
+        
+        // 适配新的中文解释字段
+        const meaningText = w["中文解释"] || "";
+        const parts = meaningText.match(/^(\S+)\s+\[(.*?)\]\s*(.*)$/);
+        if (parts) {
+            document.getElementById('wordPos').textContent = `${parts[1]} [${parts[2]}]`;
+            document.getElementById('wordMeaning').textContent = parts[3];
+        } else {
+            document.getElementById('wordPos').textContent = "";
+            document.getElementById('wordMeaning').textContent = meaningText;
+        }
+
+        document.getElementById('wordIndex').textContent = `第 ${currentWordIndex + 1} / ${currentBank.length} 个`;
+        document.getElementById('analysisPanel').style.display = 'none';
+    }
+
+    function nextWord() {
+        if (currentBank.length === 0) return;
+        currentWordIndex = (currentWordIndex + 1) % currentBank.length;
+        displayWord();
+    }
 
     function playAudio(rate) {
         const word = document.getElementById('wordText').textContent;
-        if (!word || word.includes("加载") || word.includes("暂无")) return;
+        if (word === "无单词数据" || word === "加载中...") return;
+        
         audio.src = `https://dict.youdao.com/dictvoice?audio=${word}&type=2`;
         audio.playbackRate = rate;
         audio.preservesPitch = true;
@@ -158,178 +271,103 @@
         exampleAudio.src = `https://dict.youdao.com/dictvoice?audio=${cleanWord}&type=2`;
         exampleAudio.playbackRate = 1.0;
         exampleAudio.preservesPitch = true;
-        exampleAudio.mozPreservesPitch = true;
-        exampleAudio.webkitPreservesPitch = true;
         exampleAudio.play().catch(e => console.error("例词发音播放失败:", e));
     }
 
-    function displayWord() {
-        if (wordBank.length === 0) return;
-        if (currentWordIndex >= wordBank.length) currentWordIndex = 0;
-        
-        const currentWord = wordBank[currentWordIndex];
-        document.getElementById('wordText').textContent = currentWord.word;
-        
-        const meaningStr = currentWord.meaning || "";
-        const posMatch = meaningStr.match(/\[(.*?)\]/);
-        document.getElementById('wordPos').textContent = posMatch ? posMatch[0] : "";
-        document.getElementById('wordMeaning').textContent = meaningStr.replace(/\[.*?\]/, '').trim();
-        
-        document.getElementById('wordIndex').textContent = `第 ${currentWordIndex + 1} / ${wordBank.length} 个`;
-        document.getElementById('analysisPanel').style.display = 'none';
-    }
-
-    function nextWord() {
-        if (wordBank.length === 0) return;
-        currentWordIndex = (currentWordIndex + 1) % wordBank.length;
-        displayWord();
-    }
-
-    // 自动加载 GitHub 仓库内的词库
-    async function loadDefaultBank() {
-        try {
-            // 匹配你新建的路径
-            const response = await fetch('./data/phonics-flat.json');
-            if (!response.ok) throw new Error("HTTP " + response.status);
-            const text = await response.text();
-            const data = JSON.parse(text);
-            processJsonData(data);
-        } catch (err) {
-            console.warn("自动加载失败:", err);
-            document.getElementById('wordText').textContent = "暂无单词";
-            document.getElementById('wordPos').textContent = `自动加载失败 (${err.message})，请手动上传`;
-        }
-    }
-
-    document.getElementById('fileInput').addEventListener('change', async (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-        try {
-            const text = await file.text();
-            const data = JSON.parse(text);
-            processJsonData(data);
-            alert(`成功提取 ${wordBank.length} 个单词！`);
-        } catch (err) {
-            alert("解析JSON失败，请检查文件格式是否规范: " + err.message);
-        }
-    });
-
-    // 智能解析：兼容数组格式和对象格式，兼容缺失键名的情况
-    function processJsonData(data) {
-        let rawArray = [];
-        
-        // 1. 容错：如果传入的是对象，尝试转为数组
-        if (!Array.isArray(data)) {
-            if (typeof data === 'object' && data !== null) {
-                for (let key in data) {
-                    if (typeof data[key] === 'object') {
-                        data[key][" 英语单词"] = data[key][" 英语单词"] || key; // 补全单词名
-                        rawArray.push(data[key]);
-                    }
-                }
-            }
-        } else {
-            rawArray = data;
-        }
-
-        // 2. 遍历提取数据
-        wordBank = rawArray.map(item => {
-            let word = item["英语单词"] || item["word"] || "";
-            
-            // 如果没有 "英语单词" 键，尝试找第一个不是描述性字段的字符串键
-            if (!word) {
-                for (let k in item) {
-                    if (!["中文解释", "国际音标", "音节划分", "音节划分研判", "重音位置", "重音研判", "字母与音标的对应关系（拆解）"].includes(k)) {
-                        word = item[k];
-                        break;
-                    }
-                }
-            }
-
-            return {
-                word: word,
-                meaning: item["中文解释"] || "",
-                ipa: item["国际音标"] || "",
-                splitRule: item["音节划分"] || "",
-                splitReason: item["音节划分研判"] || "",
-                stress: item["重音位置"] || "",
-                stressReason: item["重音研判"] || "",
-                breakdown: item["字母与音标的对应关系（拆解）"] || []
-            };
-        }).filter(item => item.word); // 过滤掉没有提取到单词的空行
-
-        if (wordBank.length > 0) {
-            currentWordIndex = 0;
-            displayWord();
-        } else {
-            document.getElementById('wordText').textContent = "未识别到单词";
-            document.getElementById('wordPos').textContent = "请检查 JSON 内部字段名是否匹配";
-        }
-    }
-
+    // 深度解析核心渲染逻辑
     function analyzeWord() {
-        if (wordBank.length === 0) {
-            alert("词库为空，请先加载词库！");
-            return;
-        }
-        const currentWord = wordBank[currentWordIndex];
+        if (currentBank.length === 0) return;
+        const w = currentBank[currentWordIndex];
         
-        document.getElementById('ipaText').textContent = currentWord.ipa || "/暂无/";
+        document.getElementById('ipaText').textContent = w["国际音标"] || "无";
         
+        // 渲染字母音标拆解列表
+        const breakdown = w["字母与音标的对应关系（拆解）"] || [];
         let breakdownHtml = '';
-        if (currentWord.breakdown.length > 0) {
-            breakdownHtml = '<div class="breakdown-list">';
-            currentWord.breakdown.forEach(b => {
-                let examplesHtml = '例词：';
-                if (b["例词"] && b["例词"].length > 0) {
-                    b["例词"].forEach((w, i) => {
-                        let safeW = w.replace(/'/g, "\\'");
-                        examplesHtml += `<span class="example-word" onclick="playExampleWord('${safeW}')">${w}</span>`;
-                        if (i < b["例词"].length - 1) examplesHtml += ', ';
-                    });
-                }
-                breakdownHtml += `
-                    <div class="breakdown-item">
-                        <div class="breakdown-header">
-                            <span class="breakdown-block">${b["字母组合"]}</span>
-                            <span class="breakdown-ipa">[${b["发音"]}]</span>
-                        </div>
-                        <div class="breakdown-rule">规则：${b["规则说明"]}</div>
-                        <div class="breakdown-rule">${examplesHtml}</div>
-                    </div>
-                `;
-            });
-            breakdownHtml += '</div>';
-        }
+        
+        breakdown.forEach(item => {
+            let examplesHtml = '例词：';
+            if (item["例词"] && item["例词"].length > 0) {
+                item["例词"].forEach((ex, idx) => {
+                    const safeEx = ex.replace(/'/g, "\\'");
+                    examplesHtml += `<span class="example-word" onclick="playExampleWord('${safeEx}')">${ex}</span>`;
+                    if (idx < item["例词"].length - 1) examplesHtml += ', ';
+                });
+            } else {
+                examplesHtml += '无';
+            }
 
-        const container = document.getElementById('stepsContainer');
-        container.innerHTML = `
+            breakdownHtml += `
+                <div class="breakdown-item">
+                    <div class="breakdown-header">
+                        ${item["字母组合"]} <span style="color:#666;">➔</span> ${item["发音"]}
+                    </div>
+                    <div style="font-size:14px; color:#444; margin-bottom:4px;">${item["规则说明"]}</div>
+                    <div style="font-size:14px; color:#888;">${examplesHtml}</div>
+                </div>
+            `;
+        });
+
+        // 组装六步解析卡片
+        document.getElementById('stepsContainer').innerHTML = `
             <div class="step-card">
                 <div class="step-title">第一步：找元音，划音节 & 第二步：找辅音定组合</div>
-                <div class="step-content"><strong>音节划分：</strong>${currentWord.splitRule}
-<strong>划分研判：</strong>${currentWord.splitReason}</div>
-            </div>
-            <div class="step-card combo">
-                <div class="step-title">第三步：组拼读块 & 第四步：套规则发音</div>
-                <div class="step-content">全词字母拆解与规则对应如下：</div>
-                ${breakdownHtml}
+                <div class="step-content"><strong>音节划分：</strong>${w["音节划分"] || "无"}<br><br><strong>研判分析：</strong>${w["音节划分研判"] || "无"}</div>
             </div>
             <div class="step-card">
+                <div class="step-title">第三步：组拼读块 & 第四步：套规则发音</div>
+                <div class="step-content" style="background:#fff; padding:10px; border-radius:8px;">
+                    ${breakdownHtml || "无拆解数据"}
+                </div>
+            </div>
+            <div class="step-card combo">
                 <div class="step-title">第五步：定重音</div>
-                <div class="step-content"><strong>重音位置：</strong>${currentWord.stress}
-<strong>重音研判：</strong>${currentWord.stressReason}</div>
+                <div class="step-content"><strong>重音位置：</strong>${w["重音位置"] || "无"}<br><br><strong>研判分析：</strong>${w["重音研判"] || "无"}</div>
             </div>
             <div class="step-card whole">
                 <div class="step-title">第六步：合成全词（整词拼读回顾）</div>
-                <div class="step-content">国际音标整体发音：${currentWord.ipa}</div>
+                <div class="step-content">请根据以上拆解规则，将 <strong>${w["英语单词"]}</strong> (${w["国际音标"]}) 连贯读出。</div>
             </div>
         `;
 
         document.getElementById('analysisPanel').style.display = 'block';
     }
 
-    // 页面初始化执行自动加载
-    loadDefaultBank();
+    // ==========================================================
+    // 五、本地文件上传备用逻辑
+    // ==========================================================
+    document.getElementById('fileInput').addEventListener('change', async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const overlay = document.getElementById('loadingOverlay');
+        overlay.style.display = 'flex';
+
+        try {
+            if (file.name.endsWith('.json')) {
+                const text = await file.text();
+                currentBank = JSON.parse(text);
+                currentWordIndex = 0;
+                document.getElementById('bankSwitcher').value = "";
+                displayWord();
+                alert("本地 JSON 词库加载成功！");
+            } else if (file.name.endsWith('.docx')) {
+                const arrayBuffer = await file.arrayBuffer();
+                const result = await mammoth.extractRawText({ arrayBuffer });
+                alert("Docx 解析功能已简化，建议使用标准 JSON 格式词库。");
+            } else if (file.name.endsWith('.txt')) {
+                const text = await file.text();
+                alert("Txt 解析功能已简化，建议使用标准 JSON 格式词库。");
+            }
+        } catch (error) {
+            alert("文件解析失败: " + error.message);
+        } finally {
+            overlay.style.display = 'none';
+        }
+    });
+
+    // 启动应用
+    initBankSwitcher();
 </script>
 
 </body>
